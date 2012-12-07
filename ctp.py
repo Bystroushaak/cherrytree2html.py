@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.2.0"
+__version = "0.2.1"
 __date    = "07.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -42,6 +42,8 @@ def printVersion():
 
 
 def utfToFilename(nodename, id = 0, suffix = ".html"):
+	"Convert UTF nodename to ASCII. Add id (default 0) and suffix (default .html)."
+
 	intab   = """ ?,@#$%^&*{}[]'"><°~\\|	"""
 	outtab  = """_!!!!!!!!!!!!!!!!!!!!!!!"""
 	trantab = maketrans(intab, outtab)
@@ -62,9 +64,57 @@ def listNodes(dom):
 	return ids, nodes
 
 
-def convertToHtml(dom, node_id):
-	# get node element
-	node = dom.find("node", {"unique_id" : str(node_id)})[0]
+def __transformLink(tag, dom):
+	"""Transform <rich_text link="webs http://kitakitsune.org">odkaz</rich_text> to 
+	<a href="http://kitakitsune.org">odkaz</a>.
+
+	Also some basic link handling, ala local links and links to other nodes."""
+
+	if "link" in tag.params:
+		el = d.HTMLElement("<a>")
+		el.childs = tag.childs
+
+		# cherrytree puts string "webs "/"node " before every link for some reason
+		link = tag.params["link"]
+		link = link[5:]
+
+		if tag.params["link"].startswith("webs"):
+			# absolute path to local files
+			if link.startswith("http:///"):
+				link = link[7:]
+			# relative path to local files
+			if link.startswith("http://.."):
+				link = link[7:]
+			# relative path to local files in current directory
+			if link.startswith("http://./"):
+				link = link[7:]
+		elif tag.params["link"].startswith("node "):
+			# internal links contains only node id
+			link_id = link.strip()
+
+			# get nodename
+			linked_nodename = dom.find("node", {"unique_id" : str(link_id)})
+			if len(linked_nodename) == 0:
+				writeln("Broken link to node ID '" + link_id + "'", sys.stderr)
+				link = "[broken link to internal node]"
+			else:
+				linked_nodename = linked_nodename[0].params["name"]
+
+				# convert nodename to filename - filenames contains of asciified string and nodeid
+				link = "./" + utfToFilename(linked_nodename, link_id)
+
+		el.params["href"] = link.strip()
+
+		el.endtag = d.HTMLElement("</a>")
+		tag.replaceWith(el)
+
+
+def __transformRichText(tag):
+	"Transform tag ala <rich_text some='crap'> to real html tags."
+
+	# skip blank richtext nodes
+	if len(tag.params) == 0:
+		return 
 
 	rich_text_table = [
 		{"attr_key":"weight",        "attr_val":"heavy",     "tag":"strong"},
@@ -81,55 +131,27 @@ def convertToHtml(dom, node_id):
 		{"attr_key":"justification", "attr_val":"center",    "tag":"center"},
 	]
 
+	# transform tags
+	for trans in rich_text_table:
+		if trans["attr_key"] in tag.params and tag.params[trans["attr_key"]] == trans["attr_val"]:
+			del tag.params[trans["attr_key"]]
+
+			el = d.HTMLElement("<" + trans["tag"] + ">")
+			el.childs = tag.childs
+			tag.childs = [el]
+			el.endtag = d.HTMLElement("</" + trans["tag"] + ">")
+
+
+def convertToHtml(dom, node_id):
+	# get node element
+	node = dom.find("node", {"unique_id" : str(node_id)})[0]
+
 	for t in node.find("rich_text"):
 		# transform <rich_text some="crap"> to html tags
-		for trans in rich_text_table:
-			if trans["attr_key"] in t.params and t.params[trans["attr_key"]] == trans["attr_val"]:
-				del t.params[trans["attr_key"]]
+		__transformRichText(t)
 
-				el = d.HTMLElement("<" + trans["tag"] + ">")
-				el.childs = t.childs
-				t.childs = [el]
-				el.endtag = d.HTMLElement("</" + trans["tag"] + ">")
-
-		# fix links
-		if "link" in t.params:
-			el = d.HTMLElement("<a>")
-			el.childs = t.childs
-
-			# cherrytree puts string "webs "/"node " before every link for some reason
-			link = t.params["link"]
-			link = link[5:]
-
-			if t.params["link"].startswith("webs"):
-				# absolute path to local files
-				if link.startswith("http:///"):
-					link = link[7:]
-				# relative path to local files
-				if link.startswith("http://.."):
-					link = link[7:]
-				# relative path to local files in current directory
-				if link.startswith("http://./"):
-					link = link[7:]
-			elif t.params["link"].startswith("node "):
-				# internal links contains only node id
-				link_id = link.strip()
-
-				# get nodename
-				linked_nodename = dom.find("node", {"unique_id" : str(link_id)})
-				if len(linked_nodename) == 0:
-					writeln("Broken link to node ID '" + link_id + "'", sys.stderr)
-					link = "[broken link to internal node]"
-				else:
-					linked_nodename = linked_nodename[0].params["name"]
-
-					# convert nodename to filename - filenames contains of asciified string and nodeid
-					link = "./" + utfToFilename(linked_nodename, link_id)
-
-			el.params["href"] = link.strip()
-
-			el.endtag = d.HTMLElement("</a>")
-			t.replaceWith(el)
+		# transform links
+		__transformLink(t, dom)
 
 		# there are _arrays_ of rich_text with no params - this is not same as <p>, because <p> allows
 		# nested parameters -> <p>Xex <b>bold</b></p>, but cherry tree does shit like
@@ -217,6 +239,7 @@ if __name__ == '__main__':
 		writeln(listNodes(dom)[1])
 		sys.exit(0)
 
+	# convert selected node identified by nodeid in args.node
 	if args.node != -1:
 		ids = listNodes(dom)[0]
 
