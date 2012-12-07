@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__name    = "Cherry Tree Parser"
-__version = "0.1.0"
-__date    = "06.12.2012"
+__name    = ".ctd to .html"
+__version = "0.2.0"
+__date    = "07.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -12,14 +12,19 @@ __email   = "bystrousak@kitakitsune.org"
 # Created in Sublime text 2 editor.
 #
 # Notes:
-    # 
+    # Obrázky.
+    # Vlastní vychytávky ala strong/stroked.
+    # Interaktivní režim.
 #= Imports =====================================================================
 import sys
 import os.path
 import argparse
+import unicodedata
+from string import maketrans
 
 
 from mfn import html as d
+
 
 
 #= Variables ===================================================================
@@ -36,17 +41,31 @@ def printVersion():
 	writeln(__name + " v" + __version + " (" + __date + ") by " + __author + " (" + __email + ")")
 
 
+def utfToFilename(nodename, id = 0, suffix = ".html"):
+	intab   = """ ?,@#$%^&*{}[]'"><°~\\|	"""
+	outtab  = """_!!!!!!!!!!!!!!!!!!!!!!!"""
+	trantab = maketrans(intab, outtab)
+
+	nodename = nodename.decode("utf-8")
+	s = unicodedata.normalize('NFKD', nodename).encode('ascii', 'ignore')
+
+	return str(id) + "_" + s.translate(trantab).replace("!", "") + suffix
+
+
 def listNodes(dom):
 	ids   = []
 	nodes = ""
 	for node in dom.find("node"):
-		nodes += node.params["unique_id"] + "\t- " + node.params["name"] + "\n"
+		nodes += node.params["unique_id"].ljust(4) + "- " + node.params["name"] + "\n"
 		ids.append(int(node.params["unique_id"]))
 
 	return ids, nodes
 
 
-def convertToHtml(node):
+def convertToHtml(dom, node_id):
+	# get node element
+	node = dom.find("node", {"unique_id" : str(node_id)})[0]
+
 	rich_text_table = [
 		{"attr_key":"weight",        "attr_val":"heavy",     "tag":"strong"},
 		{"attr_key":"style",         "attr_val":"italic",    "tag":"i"},
@@ -63,7 +82,7 @@ def convertToHtml(node):
 	]
 
 	for t in node.find("rich_text"):
-		# transform rich_text tags to html tags
+		# transform <rich_text some="crap"> to html tags
 		for trans in rich_text_table:
 			if trans["attr_key"] in t.params and t.params[trans["attr_key"]] == trans["attr_val"]:
 				del t.params[trans["attr_key"]]
@@ -74,25 +93,40 @@ def convertToHtml(node):
 				el.endtag = d.HTMLElement("</" + trans["tag"] + ">")
 
 		# fix links
-		if "link" in t.params and t.params["link"].startswith("webs"):
+		if "link" in t.params:
 			el = d.HTMLElement("<a>")
 			el.childs = t.childs
 
-			# cherrytree puts string "webs " before every link for some reason
+			# cherrytree puts string "webs "/"node " before every link for some reason
 			link = t.params["link"]
 			link = link[5:]
 
-			# absolute path to local files
-			if link.startswith("http:///"):
-				link = link[7:]
-			# relative path to local files
-			if link.startswith("http://.."):
-				link = link[7:]
-			# relative path to local files in current directory
-			if link.startswith("http://./"):
-				link = link[7:]
+			if t.params["link"].startswith("webs"):
+				# absolute path to local files
+				if link.startswith("http:///"):
+					link = link[7:]
+				# relative path to local files
+				if link.startswith("http://.."):
+					link = link[7:]
+				# relative path to local files in current directory
+				if link.startswith("http://./"):
+					link = link[7:]
+			elif t.params["link"].startswith("node "):
+				# internal links contains only node id
+				link_id = link.strip()
 
-			el.params["href"] = link
+				# get nodename
+				linked_nodename = dom.find("node", {"unique_id" : str(link_id)})
+				if len(linked_nodename) == 0:
+					writeln("Broken link to node ID '" + link_id + "'", sys.stderr)
+					link = "[broken link to internal node]"
+				else:
+					linked_nodename = linked_nodename[0].params["name"]
+
+					# convert nodename to filename - filenames contains of asciified string and nodeid
+					link = "./" + utfToFilename(linked_nodename, link_id)
+
+			el.params["href"] = link.strip()
 
 			el.endtag = d.HTMLElement("</a>")
 			t.replaceWith(el)
@@ -105,7 +139,7 @@ def convertToHtml(node):
 			el.childs = t.childs
 			t.replaceWith(el)
 
-	# transoform codeboxes to pre tags
+	# transoform <codebox>es to <pre> tags
 	for t in node.find("codebox"):
 		el = d.HTMLElement("<pre>")
 		el.childs = t.childs
@@ -135,33 +169,34 @@ def convertToHtml(node):
 	return str(out)
 
 
+
 #= Main program ================================================================
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument(
-		"filename", 
-		metavar="FN", 
-		action="store", 
-		default="", 
-		type=str, 
-		nargs="?", 
-		help = "Filename."
+		"filename",
+		metavar = "FN",
+		action  = "store",
+		default = "",
+		type    = str,
+		nargs   = "?",
+		help    = "Filename."
 	)
 	parser.add_argument(
-		"-l", 
-		"--list", 
-		action="store_true", 
-		default=False, 
-		help = "List names of all nodes."
+		"-l",
+		"--list",
+		action  = "store_true",
+		default = False,
+		help    = "List names of all nodes."
 	)
 	parser.add_argument(
-		"-n", 
-		"--node", 
-		metavar="NODE ID", 
-		action="store", 
-		type=int, 
-		default=-1, 
-		help = "Parse node ."
+		"-n",
+		"--node",
+		metavar = "NODE ID",
+		action  = "store",
+		type    = int,
+		default = -1,
+		help    = "Parse node ."
 	)
 	args = parser.parse_args()
 
@@ -189,6 +224,4 @@ if __name__ == '__main__':
 			writeln("Selected ID '" + str(args.node) + "' doesn't exists!", sys.stderr)
 			sys.exit(3)
 
-		node = dom.find("node", {"unique_id" : str(args.node)})
-
-		print convertToHtml(node[0])
+		writeln(convertToHtml(dom, args.node))
