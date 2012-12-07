@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.2"
+__version = "0.3.3"
 __date    = "07.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -14,10 +14,10 @@ __email   = "bystrousak@kitakitsune.org"
 # Notes:
 	# &nbsp;
 	# [TAB]
-	# HTML template.
 	# Podporu pro <ul><li>
 	# Obrázky.
 	# Vlastní vychytávky ala strong/stroked pro RSS.
+	# Konfigurace v konfigurácích a ne v kódu.
 #= Imports =====================================================================
 import os
 import sys
@@ -33,6 +33,8 @@ from mfn import html as d
 
 #= Variables ===================================================================
 OUT_DIR = "output"
+RES_DIR = "resources"
+HTML_TEMPLATE = open(RES_DIR + "/template.html").read()
 
 
 
@@ -219,19 +221,22 @@ def saveNode(dom, nodeid, name = None):
 	"Convert node to the HTML and save it to the HTML."
 
 	# ugly, bud increase parsing speed a bit
-	nodename = ""
 	if name == None:
-		nodename = dom.find("node", {"unique_id" : str(nodeid)})[0]
-		nodename = nodename.params["name"]
-	else:
-		nodename = name
-	nodename = utfToFilename(nodename, str(nodeid))
+		name = dom.find("node", {"unique_id" : str(nodeid)})[0]
+		name = name.params["name"]
 
-	fh = open(OUT_DIR + "/" + nodename, "wt")
-	fh.write(convertToHtml(dom, str(nodeid)))
+	# generate filename, convert html
+	filename = utfToFilename(name, str(nodeid))
+	data     = convertToHtml(dom, str(nodeid))
+
+	# apply html template
+	data = HTML_TEMPLATE.replace("{content}", data).replace("{title}", name)
+
+	fh = open(OUT_DIR + "/" + filename, "wt")
+	fh.write(data)
 	fh.close()
 
-	return nodename
+	return filename
 
 
 
