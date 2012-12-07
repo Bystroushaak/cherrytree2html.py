@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.1"
+__version = "0.3.2"
 __date    = "07.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -13,12 +13,13 @@ __email   = "bystrousak@kitakitsune.org"
 #
 # Notes:
 	# &nbsp;
-	# Batch conversions.
+	# [TAB]
 	# HTML template.
 	# Podporu pro <ul><li>
 	# Obrázky.
 	# Vlastní vychytávky ala strong/stroked pro RSS.
 #= Imports =====================================================================
+import os
 import sys
 import os.path
 import argparse
@@ -31,6 +32,7 @@ from mfn import html as d
 
 
 #= Variables ===================================================================
+OUT_DIR = "output"
 
 
 
@@ -47,8 +49,8 @@ def printVersion():
 def utfToFilename(nodename, id = 0, suffix = ".html"):
 	"Convert UTF nodename to ASCII. Add id (default 0) and suffix (default .html)."
 
-	intab   = """ ?,@#$%^&*{}[]'"><°~\\|	"""
-	outtab  = """_!!!!!!!!!!!!!!!!!!!!!!!"""
+	intab   = """ ?,@#$%^&*{}[]'/"><°~\\|	"""
+	outtab  = """_!!!!!!!!!!!!!!!!!!!!!!!!"""
 	trantab = maketrans(intab, outtab)
 
 	nodename = nodename.decode("utf-8")
@@ -65,18 +67,6 @@ def listNodes(dom):
 		ids.append(int(node.params["unique_id"]))
 
 	return ids, nodes
-
-
-def saveNode(dom, nodeid):
-	nodename = dom.find("node", {"unique_id" : str(nodeid)})[0]
-	nodename = nodename.params["name"]
-	nodename = utfToFilename(nodename, str(nodeid))
-
-	fh = open(nodename, "wt")
-	fh.write(convertToHtml(dom, str(nodeid)))
-	fh.close()
-
-	return nodename
 
 
 def __transformLink(tag, dom):
@@ -162,6 +152,7 @@ def convertToHtml(dom, node_id):
 	# get node element
 	node = dom.find("node", {"unique_id" : str(node_id)})[0]
 
+
 	for t in node.find("rich_text"):
 		# transform <rich_text some="crap"> to html tags
 		__transformRichText(t)
@@ -176,6 +167,7 @@ def convertToHtml(dom, node_id):
 			el = d.HTMLElement()
 			el.childs = t.childs
 			t.replaceWith(el)
+
 
 	# transoform <codebox>es to <pre> tags
 	for t in node.find("codebox"):
@@ -208,9 +200,38 @@ def convertToHtml(dom, node_id):
 			if str(t).strip() != "":
 				out += str(t) + "\n\n"
 
+	if tmp != "":
+		# add inner </p><p> tags instead of blank lines
+		tmp = tmp.strip().replace("\n\n", "</p><p>")
+
+		# <br /> support
+		tmp = tmp.replace("\n", "<br />\n").replace("</p><p>", "</p>\n\n<p>")
+		out += "<p>" + tmp + "</p>\n\n"
+
+		tmp = ""
+
 	# TODO transform • to ul/li tags
 
 	return str(out)
+
+
+def saveNode(dom, nodeid, name = None):
+	"Convert node to the HTML and save it to the HTML."
+
+	# ugly, bud increase parsing speed a bit
+	nodename = ""
+	if name == None:
+		nodename = dom.find("node", {"unique_id" : str(nodeid)})[0]
+		nodename = nodename.params["name"]
+	else:
+		nodename = name
+	nodename = utfToFilename(nodename, str(nodeid))
+
+	fh = open(OUT_DIR + "/" + nodename, "wt")
+	fh.write(convertToHtml(dom, str(nodeid)))
+	fh.close()
+
+	return nodename
 
 
 
@@ -246,6 +267,13 @@ if __name__ == '__main__':
 		action  = "store_true",
 		default = False,
 		help    = "Save to file named nodeid_ascii_nodename.html."
+	)
+	parser.add_argument(
+		"-a",
+		"--all",
+		action  = "store_true",
+		default = False,
+		help    = "Save all nodes to HTML."
 	)
 	parser.add_argument(
 		"-n",
@@ -306,6 +334,16 @@ if __name__ == '__main__':
 			writeln("\nSaved to '" + nodename + "'")
 		else:
 			writeln(convertToHtml(dom, str(nodeid)))
+
+		sys.exit(0)
+
+	if args.all:
+		if not os.path.exists(OUT_DIR):
+			os.makedirs(OUT_DIR)
+
+		for n in dom.find("node"):
+			nodename = saveNode(dom, n.params["unique_id"].strip(), n.params["name"])
+			writeln("Node '" + nodename + "' saved.")
 
 		sys.exit(0)
 
