@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.2.1"
+__version = "0.3.0"
 __date    = "07.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -36,7 +36,7 @@ def write(s, out=sys.stdout):
 	out.write(str(s))
 	out.flush()
 def writeln(s, out=sys.stdout):
-	write(str(s) + "\n")
+	write(str(s) + "\n", out)
 def printVersion():
 	writeln(__name + " v" + __version + " (" + __date + ") by " + __author + " (" + __email + ")")
 
@@ -62,6 +62,18 @@ def listNodes(dom):
 		ids.append(int(node.params["unique_id"]))
 
 	return ids, nodes
+
+
+def saveNode(dom, nodeid):
+	nodename = dom.find("node", {"unique_id" : str(nodeid)})[0]
+	nodename = nodename.params["name"]
+	nodename = utfToFilename(nodename, str(nodeid))
+
+	fh = open(nodename, "wt")
+	fh.write(convertToHtml(dom, str(nodeid)))
+	fh.close()
+
+	return nodename
 
 
 def __transformLink(tag, dom):
@@ -142,6 +154,7 @@ def __transformRichText(tag):
 			el.endtag = d.HTMLElement("</" + trans["tag"] + ">")
 
 
+
 def convertToHtml(dom, node_id):
 	# get node element
 	node = dom.find("node", {"unique_id" : str(node_id)})[0]
@@ -212,13 +225,27 @@ if __name__ == '__main__':
 		help    = "List names of all nodes."
 	)
 	parser.add_argument(
+		"-i",
+		"--interactive",
+		action  = "store_true",
+		default = False,
+		help    = "Interactive mode - select what node do you want and convert it to HTMl."
+	)
+	parser.add_argument(
+		"-s",
+		"--save",
+		action  = "store_true",
+		default = False,
+		help    = "Save to file named nodeid_ascii_nodename.html."
+	)
+	parser.add_argument(
 		"-n",
 		"--node",
 		metavar = "NODE ID",
 		action  = "store",
 		type    = int,
 		default = -1,
-		help    = "Parse node ."
+		help    = "Parse node."
 	)
 	args = parser.parse_args()
 
@@ -239,6 +266,38 @@ if __name__ == '__main__':
 		writeln(listNodes(dom)[1])
 		sys.exit(0)
 
+	if args.interactive:
+		ids, nodes = listNodes(dom)
+
+		writeln(nodes, sys.stderr)
+		writeln("Select node:\n", sys.stderr)
+
+		selected = False
+		while selected != True:
+			write(":> ", sys.stderr)
+			nodeid = raw_input("")
+
+			try:
+				nodeid = int(nodeid)
+				selected = True
+			except ValueError:
+				writeln("\nWrong node.\n", sys.stderr)
+				continue
+
+			if nodeid not in ids:
+				writeln("\nWrong node, pick different one.\n", sys.stderr)
+				selected = False
+				continue
+
+		if args.save:
+			nodename = saveNode(dom, nodeid)
+
+			writeln("\nSaved to '" + nodename + "'")
+		else:
+			writeln(convertToHtml(dom, str(nodeid)))
+
+		sys.exit(0)
+
 	# convert selected node identified by nodeid in args.node
 	if args.node != -1:
 		ids = listNodes(dom)[0]
@@ -247,4 +306,9 @@ if __name__ == '__main__':
 			writeln("Selected ID '" + str(args.node) + "' doesn't exists!", sys.stderr)
 			sys.exit(3)
 
-		writeln(convertToHtml(dom, args.node))
+		if args.save:
+			nodename = saveNode(dom, args.node)
+
+			writeln("Saved to '" + nodename + "'")
+		else:
+			writeln(convertToHtml(dom, args.node))
