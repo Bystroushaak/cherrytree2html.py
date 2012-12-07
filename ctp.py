@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.0"
+__version = "0.3.1"
 __date    = "07.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -12,9 +12,12 @@ __email   = "bystrousak@kitakitsune.org"
 # Created in Sublime text 2 editor.
 #
 # Notes:
-    # Obrázky.
-    # Vlastní vychytávky ala strong/stroked.
-    # Interaktivní režim.
+	# &nbsp;
+	# Batch conversions.
+	# HTML template.
+	# Podporu pro <ul><li>
+	# Obrázky.
+	# Vlastní vychytávky ala strong/stroked pro RSS.
 #= Imports =====================================================================
 import sys
 import os.path
@@ -193,7 +196,13 @@ def convertToHtml(dom, node_id):
 		if n != "h1" and n != "h2" and n != "h3" and n != "pre":
 			tmp += str(t)
 			if str(t).endswith("\n\n"):
-				out += "<p>" + tmp.strip().replace("\n\n", "</p>\n\n<p>") + "</p>\n\n"
+				# add inner </p><p> tags instead of blank lines
+				tmp = tmp.strip().replace("\n\n", "</p><p>")
+
+				# <br /> support
+				tmp = tmp.replace("\n", "<br />\n").replace("</p><p>", "</p>\n\n<p>")
+				out += "<p>" + tmp + "</p>\n\n"
+
 				tmp = ""
 		else:
 			if str(t).strip() != "":
@@ -266,12 +275,14 @@ if __name__ == '__main__':
 		writeln(listNodes(dom)[1])
 		sys.exit(0)
 
+	# interactive mode
 	if args.interactive:
 		ids, nodes = listNodes(dom)
 
 		writeln(nodes, sys.stderr)
 		writeln("Select node:\n", sys.stderr)
 
+		# read userdata.
 		selected = False
 		while selected != True:
 			write(":> ", sys.stderr)
