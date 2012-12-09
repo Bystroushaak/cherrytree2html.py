@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.4"
+__version = "0.3.5"
 __date    = "09.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -12,8 +12,6 @@ __email   = "bystrousak@kitakitsune.org"
 # Created in Sublime text 2 editor.
 #
 # Notes:
-	# &nbsp;
-	# [TAB]
 	# Podporu pro <ul><li>
 	# Obrázky.
 	# Vlastní vychytávky ala strong/stroked pro RSS.
@@ -34,6 +32,7 @@ from mfn import html as d
 #= Variables ===================================================================
 OUT_DIR = "output"
 RES_DIR = "resources"
+TAB_SIZE = 4
 HTML_TEMPLATE = open(RES_DIR + "/template.html").read()
 
 
@@ -195,8 +194,14 @@ def convertToHtml(dom, node_id):
 
 				# <br /> support
 				tmp = tmp.replace("\n", "<br />\n").replace("</p><p>", "</p>\n\n<p>")
-				out += "<p>" + tmp + "</p>\n\n"
 
+				# &#nbsp;
+				tmp = tmp.replace("  ", "&nbsp; ")
+
+				# tab support
+				tmp = tmp.replace("\t", "&nbsp;" * TAB_SIZE)
+
+				out += "<p>" + tmp + "</p>\n\n"
 				tmp = ""
 		else:
 			if str(t).strip() != "":
@@ -308,6 +313,8 @@ if __name__ == '__main__':
 	if not os.path.exists(args.filename):
 		writeln("Specified filename '" + args.filename + "' doesn't exists!", sys.stderr)
 		sys.exit(2)
+	if args.save and not os.path.exists(OUT_DIR):
+		os.makedirs(OUT_DIR)
 
 	# read cherrytree file and parse it to the DOM
 	fh = open(args.filename)
