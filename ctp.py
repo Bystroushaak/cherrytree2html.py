@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.3"
-__date    = "07.12.2012"
+__version = "0.3.4"
+__date    = "09.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -253,6 +253,13 @@ if __name__ == '__main__':
 		help    = "Filename."
 	)
 	parser.add_argument(
+		"-v",
+		"--version",
+		action  = "store_true",
+		default = False,
+		help    = "Print version."
+	)
+	parser.add_argument(
 		"-l",
 		"--list",
 		action  = "store_true",
@@ -291,6 +298,10 @@ if __name__ == '__main__':
 	)
 	args = parser.parse_args()
 
+	if args.version:
+		printVersion()
+		sys.exit(0)
+
 	if args.filename == "":
 		writeln("You have to specify cherrytree xml file!", sys.stderr)
 		sys.exit(1)
@@ -309,7 +320,7 @@ if __name__ == '__main__':
 		sys.exit(0)
 
 	# interactive mode
-	if args.interactive:
+	elif args.interactive:
 		ids, nodes = listNodes(dom)
 
 		writeln(nodes, sys.stderr)
@@ -340,9 +351,7 @@ if __name__ == '__main__':
 		else:
 			writeln(convertToHtml(dom, str(nodeid)))
 
-		sys.exit(0)
-
-	if args.all:
+	elif args.all:
 		if not os.path.exists(OUT_DIR):
 			os.makedirs(OUT_DIR)
 
@@ -353,7 +362,7 @@ if __name__ == '__main__':
 		sys.exit(0)
 
 	# convert selected node identified by nodeid in args.node
-	if args.node != -1:
+	elif args.node != -1:
 		ids = listNodes(dom)[0]
 
 		if args.node not in ids:
