@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.5"
+__version = "0.3.6"
 __date    = "09.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -33,6 +33,7 @@ from mfn import html as d
 OUT_DIR = "output"
 RES_DIR = "resources"
 TAB_SIZE = 4
+DONT_WRAP = ["h1", "h2", "h3", "pre", "center"]
 HTML_TEMPLATE = open(RES_DIR + "/template.html").read()
 
 
@@ -179,14 +180,14 @@ def convertToHtml(dom, node_id):
 		t.replaceWith(el)
 
 	# dont ask..
-	node = d.parseString(str(node))
+	node = d.parseString(str(node).replace('<rich_text justification="left">', ""))
 
 	# generate p
 	out = ""
 	tmp = ""
 	for t in node.childs[0].childs:
 		n = t.getTagName().lower()
-		if n != "h1" and n != "h2" and n != "h3" and n != "pre":
+		if n not in DONT_WRAP:
 			tmp += str(t)
 			if str(t).endswith("\n\n"):
 				# add inner </p><p> tags instead of blank lines
@@ -339,6 +340,7 @@ if __name__ == '__main__':
 			write(":> ", sys.stderr)
 			nodeid = raw_input("")
 
+			# try read number from user
 			try:
 				nodeid = int(nodeid)
 				selected = True
@@ -346,6 +348,7 @@ if __name__ == '__main__':
 				writeln("\nWrong node.\n", sys.stderr)
 				continue
 
+			# check if given number can be used as ID
 			if nodeid not in ids:
 				writeln("\nWrong node, pick different one.\n", sys.stderr)
 				selected = False
