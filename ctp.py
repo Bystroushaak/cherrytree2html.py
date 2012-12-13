@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.6"
-__date    = "09.12.2012"
+__version = "0.3.7"
+__date    = "12.12.2012"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -14,8 +14,6 @@ __email   = "bystrousak@kitakitsune.org"
 # Notes:
 	# Podporu pro <ul><li>
 	# Obrázky.
-	# Vlastní vychytávky ala strong/stroked pro RSS.
-	# Konfigurace v konfigurácích a ne v kódu.
 #= Imports =====================================================================
 import os
 import sys
@@ -31,10 +29,23 @@ from mfn import html as d
 
 #= Variables ===================================================================
 OUT_DIR = "output"
-RES_DIR = "resources"
 TAB_SIZE = 4
 DONT_WRAP = ["h1", "h2", "h3", "pre", "center"]
-HTML_TEMPLATE = open(RES_DIR + "/template.html").read()
+HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<head>
+	<title>{title}</title>
+	
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+
+<body>
+
+{content}
+
+</body>
+</HTML>"""
 
 
 
@@ -127,7 +138,7 @@ def __transformRichText(tag):
 		{"attr_key":"weight",        "attr_val":"heavy",     "tag":"strong"},
 		{"attr_key":"style",         "attr_val":"italic",    "tag":"i"},
 		{"attr_key":"underline",     "attr_val":"single",    "tag":"u"},
-		{"attr_key":"strikethrough", "attr_val":"true",      "tag":"strike"},
+		{"attr_key":"strikethrough", "attr_val":"true",      "tag":"del"},
 		{"attr_key":"family",        "attr_val":"monospace", "tag":"tt"},
 		{"attr_key":"scale",         "attr_val":"h1",        "tag":"h1"},
 		{"attr_key":"scale",         "attr_val":"h2",        "tag":"h2"},
@@ -277,14 +288,14 @@ if __name__ == '__main__':
 		"--interactive",
 		action  = "store_true",
 		default = False,
-		help    = "Interactive mode - select what node do you want and convert it to HTMl."
+		help    = "Interactive mode - select node and convert it to HTML."
 	)
 	parser.add_argument(
 		"-s",
 		"--save",
 		action  = "store_true",
 		default = False,
-		help    = "Save to file named nodeid_ascii_nodename.html."
+		help    = "Save to file named [nodeid]_[ascii_nodename].html."
 	)
 	parser.add_argument(
 		"-a",
@@ -300,7 +311,7 @@ if __name__ == '__main__':
 		action  = "store",
 		type    = int,
 		default = -1,
-		help    = "Parse node."
+		help    = "Print converted node to stdout."
 	)
 	args = parser.parse_args()
 
