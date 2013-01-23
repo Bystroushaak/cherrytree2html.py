@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.3.7"
-__date    = "12.12.2012"
+__version = "0.4.0"
+__date    = "24.01.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -130,9 +130,15 @@ def __transformLink(tag, dom):
 def __transformRichText(tag):
 	"Transform tag ala <rich_text some='crap'> to real html tags."
 
-	# skip blank richtext nodes
+	# skip richtext nodes with no parameters (they are removed later)
 	if len(tag.params) == 0:
-		return 
+		return
+
+	# tags which contains nothing printable are converted just to its content (whitespaces) 
+	# "<h3> </h3>" -> " "
+	if tag.getContent().strip() == "":
+		tag.params = {}
+		return
 
 	rich_text_table = [
 		{"attr_key":"weight",        "attr_val":"heavy",     "tag":"strong"},
@@ -154,6 +160,7 @@ def __transformRichText(tag):
 		if trans["attr_key"] in tag.params and tag.params[trans["attr_key"]] == trans["attr_val"]:
 			del tag.params[trans["attr_key"]]
 
+			# put HTML tag INTO rich_text
 			el = d.HTMLElement("<" + trans["tag"] + ">")
 			el.childs = tag.childs
 			tag.childs = [el]
@@ -182,7 +189,7 @@ def convertToHtml(dom, node_id):
 			t.replaceWith(el)
 
 
-	# transoform <codebox>es to <pre> tags
+	# transform <codebox>es to <pre> tags
 	for t in node.find("codebox"):
 		el = d.HTMLElement("<pre>")
 		el.childs = t.childs
