@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.4.0"
-__date    = "24.01.2013"
+__version = "0.4.1"
+__date    = "27.01.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -172,6 +172,10 @@ def convertToHtml(dom, node_id):
 	# get node element
 	node = dom.find("node", {"unique_id" : str(node_id)})[0]
 
+	# remove subnodes
+	for n in node.find("node"):
+		if n.params["unique_id"] != str(node_id):
+			n.replaceWith(d.HTMLElement(""))
 
 	for t in node.find("rich_text"):
 		# transform <rich_text some="crap"> to html tags
