@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.4.1"
-__date    = "27.01.2013"
+__version = "0.5.0"
+__date    = "28.01.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -177,6 +177,36 @@ def convertToHtml(dom, node_id):
 		if n.params["unique_id"] != str(node_id):
 			n.replaceWith(d.HTMLElement(""))
 
+
+	#===========================================================================
+	# transform <codebox>es to <pre> tags.
+	# CherryTree saves <codebox>es at the end of the <node>. Thats right - they 
+	# are not in the source as all other tags, but at the end. Instead of 
+	# <codebox> in the text, there is <rich_text justification="left"></rich_text>
+	# That needs to be replaced with <pre>
+
+	# remove <codeboxes> from DOM, create new pre tags and put them into
+	# codeboxes[] variable
+	codeboxes = []
+	for codebox in node.find("codebox"):
+		el = d.HTMLElement("<pre>")
+		el.childs = codebox.childs[:]
+		el.params["syntax"] = codebox.params["syntax_highlighting"]
+		el.endtag = d.HTMLElement("</pre>")
+		codeboxes.append(el)
+
+		# remove original <codebox> from DOM
+		codebox.replaceWith(d.HTMLElement(""))
+
+	# replace <rich_text justification="left"></rich_text> with <pre> tags
+	cnt = 0
+	for j in node.find("rich_text", {"justification":"left"}):
+		j.replaceWith(codeboxes[cnt])
+		cnt += 1
+	#===========================================================================
+
+
+	# transform all <rich_text> tags to something usefull
 	for t in node.find("rich_text"):
 		# transform <rich_text some="crap"> to html tags
 		__transformRichText(t)
@@ -191,15 +221,6 @@ def convertToHtml(dom, node_id):
 			el = d.HTMLElement()
 			el.childs = t.childs
 			t.replaceWith(el)
-
-
-	# transform <codebox>es to <pre> tags
-	for t in node.find("codebox"):
-		el = d.HTMLElement("<pre>")
-		el.childs = t.childs
-		el.params["syntax"] = t.params["syntax_highlighting"]
-		el.endtag = d.HTMLElement("</pre>")
-		t.replaceWith(el)
 
 	# dont ask..
 	node = d.parseString(str(node).replace('<rich_text justification="left">', ""))
