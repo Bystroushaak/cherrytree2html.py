@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.5.0"
-__date    = "28.01.2013"
+__version = "0.5.1"
+__date    = "29.01.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -245,7 +245,9 @@ def convertToHtml(dom, node_id):
 				# tab support
 				tmp = tmp.replace("\t", "&nbsp;" * TAB_SIZE)
 
-				out += "<p>" + tmp + "</p>\n\n"
+				# skip blank string fields
+				if tmp.strip() != "":
+					out += "<p>" + tmp + "</p>\n\n"
 				tmp = ""
 		else:
 			if str(t).strip() != "":
