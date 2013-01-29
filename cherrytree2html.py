@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.5.1"
+__version = "0.5.2"
 __date    = "29.01.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -23,8 +23,20 @@ import unicodedata
 from string import maketrans
 
 
-from mfn import html as d
+# well, this will work everywhere and exactly how i want, not like print / print()
+def write(s, out=sys.stdout):
+	out.write(str(s))
+	out.flush()
+def writeln(s, out=sys.stdout):
+	write(str(s) + "\n", out)
 
+
+try:
+	import dhtmlparser as d
+except ImportError:
+	writeln("\nThis script require dhtmlparser.", sys.stderr)
+	writeln("> https://github.com/Bystroushaak/pyDHTMLParser <\n", sys.stderr)
+	sys.exit(1)
 
 
 #= Variables ===================================================================
@@ -50,11 +62,6 @@ HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN
 
 
 #= Functions & objects =========================================================
-def write(s, out=sys.stdout):
-	out.write(str(s))
-	out.flush()
-def writeln(s, out=sys.stdout):
-	write(str(s) + "\n", out)
 def printVersion():
 	writeln(__name + " v" + __version + " (" + __date + ") by " + __author + " (" + __email + ")")
 
@@ -73,6 +80,8 @@ def utfToFilename(nodename, id = 0, suffix = ".html"):
 
 
 def listNodes(dom):
+	"Return list of nodes and their IDs."
+
 	ids   = []
 	nodes = ""
 	for node in dom.find("node"):
