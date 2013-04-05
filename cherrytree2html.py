@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.5.2"
-__date    = "29.01.2013"
+__version = "0.6.0"
+__date    = "05.04.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -298,6 +298,19 @@ def saveNode(dom, nodeid, name = None):
 
 	return filename
 
+def rawXml(dom, node_id):
+	"Just return node XML source."
+
+	# get node element
+	node = dom.find("node", {"unique_id" : str(node_id)})[0]
+
+	# remove subnodes
+	for n in node.find("node"):
+		if n.params["unique_id"] != str(node_id):
+			n.replaceWith(d.HTMLElement(""))
+
+	return str(node)
+
 
 
 #= Main program ================================================================
@@ -356,6 +369,13 @@ if __name__ == '__main__':
 		default = -1,
 		help    = "Print converted node to stdout."
 	)
+	parser.add_argument(
+		"-r",
+		"--raw",
+		action  = "store_true",
+		default = False,
+		help    = "Print raw node source code (XML)."
+	)
 	args = parser.parse_args()
 
 	if args.version:
@@ -376,11 +396,14 @@ if __name__ == '__main__':
 	dom = d.parseString(fh.read())
 	fh.close()
 
+	# raw - patch convertToHtml
+	if args.raw:
+		convertToHtml = rawXml
+
 	# show content of cherrytree file
 	if args.list:
 		writeln(listNodes(dom)[1])
 		sys.exit(0)
-
 	# interactive mode
 	elif args.interactive:
 		ids, nodes = listNodes(dom)
