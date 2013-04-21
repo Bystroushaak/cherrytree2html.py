@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.7.1"
+__version = "0.7.2"
 __date    = "21.04.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -270,7 +270,7 @@ def guessParagraphs(s):
 
 				# first element is part of previous <p>
 				p_stack[-1].append(tmp[0])
-				del[tmp[0]]
+				tmp = tmp[1:] if len(tmp) > 1 else [] # del tmp[0] <- this tends to delete object in tmp[0] .. wtf?
 
 				# other elements are new <p>s by itself
 				for i in tmp:
