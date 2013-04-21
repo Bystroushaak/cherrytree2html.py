@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.7.0"
+__version = "0.7.1"
 __date    = "21.04.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -248,7 +248,11 @@ def guessParagraphs(s):
 			if el.isTag():
 				processBuffer(el.childs)
 			else:
-				tmp = map(lambda x: d.HTMLElement(x), content.split("\n\n")) # split by \n\n and convert it to tags
+				# split by \n\n and convert it to tags
+				tmp = map(
+					lambda x: d.HTMLElement(x.strip("\n").replace("\n", "<br />\n")), # support for <br>
+					content.split("\n\n")
+				)
 
 				# new tags are moved into blank container
 				# original element is then replaced by this blank container
