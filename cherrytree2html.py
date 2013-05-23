@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.7.4"
-__date    = "21.04.2013"
+__version = "0.7.5"
+__date    = "23.05.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -325,6 +325,7 @@ def guessParagraphs(s):
 def convertToHtml(dom, node_id):
 	# get node element
 	node = dom.find("node", {"unique_id" : str(node_id)})[0]
+	node = d.parseString(str(node)).find("node")[0] # easiest way to do deep copy
 
 	# remove subnodes
 	for n in node.find("node"):
@@ -401,7 +402,8 @@ def saveNode(dom, nodeid, name = None):
 	# apply html template
 	data = Template(HTML_TEMPLATE).substitute(
 		content   = data,
-		title     = name
+		title     = name,
+		copyright = COPYRIGHT
 	)
 
 	fh = open(OUT_DIR + "/" + filename, "wt")
