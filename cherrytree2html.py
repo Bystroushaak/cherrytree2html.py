@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.7.5"
+__version = "0.8.0"
 __date    = "23.05.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -79,19 +79,6 @@ def printVersion():
 	writeln(__name + " v" + __version + " (" + __date + ") by " + __author + " (" + __email + ")")
 
 
-def utfToFilename(nodename, id = 0, suffix = ".html"):
-	"Convert UTF nodename to ASCII. Add id (default 0) and suffix (default .html)."
-
-	intab   = """ ?,@#$%^&*{}[]'/"><°~\\|	"""
-	outtab  = """_!!!!!!!!!!!!!!!!!!!!!!!!"""
-	trantab = maketrans(intab, outtab)
-
-	nodename = nodename.decode("utf-8")
-	s = unicodedata.normalize('NFKD', nodename).encode('ascii', 'ignore')
-
-	return str(id) + "_" + s.translate(trantab).replace("!", "") + suffix
-
-
 def listNodes(dom):
 	"Return list of nodes and their IDs."
 
@@ -104,7 +91,7 @@ def listNodes(dom):
 	return ids, nodes
 
 
-def __transformLink(tag, dom):
+def __transformLink(tag, dom, node_id):
 	"""Transform <rich_text link="webs http://kitakitsune.org">odkaz</rich_text> to 
 	<a href="http://kitakitsune.org">odkaz</a>.
 
@@ -138,10 +125,8 @@ def __transformLink(tag, dom):
 				writeln("Broken link to node ID '" + link_id + "'", sys.stderr)
 				link = "[broken link to internal node]"
 			else:
-				linked_nodename = linked_nodename[0].params["name"]
-
-				# convert nodename to filename - filenames contains of asciified string and nodeid
-				link = "./" + utfToFilename(linked_nodename, link_id)
+				depth = len(getNodePath(dom, node_id).split("/")) - 1 # get (this) node depth
+				link = "./" + (depth * "../") + getNodePath(dom, link_id)
 
 		el.params["href"] = link.strip()
 
@@ -253,6 +238,10 @@ def guessParagraphs(s):
 
 			# content without \n\n is just regular part of <p>
 			if not "\n\n" in content:
+				if "\n" in content:
+					nel = d.parseString(str(el).replace("\n", "<br />\n"))
+					nel.parent = el.parent
+					el.replaceWith(nel)
 				p_stack[-1].append(el)
 				continue
 
@@ -261,7 +250,7 @@ def guessParagraphs(s):
 			else:
 				# split by \n\n and convert it to tags
 				tmp = map(
-					lambda x: d.HTMLElement(x.strip("\n").replace("\n", "<br />\n")), # support for <br>
+					lambda x: d.HTMLElement(x.replace("\n", "<br />\n")), # support for <br>
 					content.split("\n\n")
 				)
 
@@ -318,7 +307,8 @@ def guessParagraphs(s):
 	                .replace("<p>", "\n<p>")       \
 	                .replace("</p>", "</p>\n\n")   \
 	                .replace("<p>\n", "<p>")       \
-	                .replace("<h", "\n<h")
+	                .replace("<h", "\n<h")         \
+	                .replace("<p><br />\n", "<p>") # don't ask..
 
 
 
@@ -367,7 +357,7 @@ def convertToHtml(dom, node_id):
 		__transformRichText(t)
 
 		# transform links
-		__transformLink(t, dom)
+		__transformLink(t, dom, node_id)
 
 		# there are _arrays_ of rich_text with no params - this is not same as <p>, because <p> allows
 		# nested parameters -> <p>Xex <b>bold</b></p>, but cherry tree does shit like
@@ -384,20 +374,62 @@ def convertToHtml(dom, node_id):
 
 	# TODO transform • to ul/li tags
 
-	return str(node.find("node")[0].getContent()) + COPYRIGHT
+	return str(node.find("node")[0].getContent())
+
+
+def __utfToFilename(nodename):
+	"Convert UTF nodename to ASCII."
+
+	intab   = """ ?,@#$%^&*{}[]'"><°~\\|	"""
+	outtab  = """_!!!!!!!!!!!!!!!!!!!!!!!"""
+	trantab = maketrans(intab, outtab)
+
+	nodename = nodename.decode("utf-8")
+	s = unicodedata.normalize('NFKD', nodename).encode('ascii', 'ignore')
+
+	return s.translate(trantab).replace("!", "")
+
+def getNodePath(dom, nodeid):
+	"Retun file path of node with given |nodeid|."
+
+	# check if dom is already double-linked list
+	if not hasattr(dom.childs[0], 'parent') or dom.childs[0].parent != dom:
+		d.makeDoubleLinked(dom)
+
+	# get reference to node
+	node = dom.find("node", {"unique_id" : str(nodeid)})[0]
+
+	# does this node contain another nodes?
+	endpoint = len(node.find("node")) <= 1
+
+	# get path (based on node path in dom)
+	path = ""
+	while node.parent != None and node.getTagName().lower() == "node":
+		path = node.params["name"] + "/" + path
+		node = node.parent
+
+	if endpoint:
+		path = path[:-1] # remove '/' from end of the path
+	else:
+		path += "index"  # index file for directory
+	path += ".html"
+
+	return __utfToFilename(path)
 
 
 def saveNode(dom, nodeid, name = None):
 	"Convert node to the HTML and save it to the HTML."
 
+	nodeid = str(nodeid)
+	filename = getNodePath(dom, nodeid)
+
 	# ugly, bud increase parsing speed a bit
 	if name == None:
-		name = dom.find("node", {"unique_id" : str(nodeid)})[0]
+		name = dom.find("node", {"unique_id" : nodeid})[0]
 		name = name.params["name"]
 
 	# generate filename, convert html
-	filename = utfToFilename(name, str(nodeid))
-	data     = convertToHtml(dom, str(nodeid))
+	data     = convertToHtml(dom, nodeid)
 
 	# apply html template
 	data = Template(HTML_TEMPLATE).substitute(
@@ -405,6 +437,11 @@ def saveNode(dom, nodeid, name = None):
 		title     = name,
 		copyright = COPYRIGHT
 	)
+
+	# check if directory tree exists - if not, create it
+	directory = OUT_DIR + "/" + os.path.dirname(filename)
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 
 	fh = open(OUT_DIR + "/" + filename, "wt")
 	fh.write(data)
@@ -496,19 +533,27 @@ if __name__ == '__main__':
 		printVersion()
 		sys.exit(0)
 
-	if args.filename == "":
-		writeln("You have to specify cherrytree xml file!", sys.stderr)
-		sys.exit(1)
-	if not os.path.exists(args.filename):
-		writeln("Specified filename '" + args.filename + "' doesn't exists!", sys.stderr)
-		sys.exit(2)
 	if args.save and not os.path.exists(OUT_DIR):
 		os.makedirs(OUT_DIR)
 
+	if args.filename == "":
+		writeln("You have to specify cherrytree xml file!", sys.stderr)
+		sys.exit(1)
+
+	# try open and read data from given location
+	if os.path.exists(args.filename):
+		fh = open(args.filename)
+		data = fh.read()
+		fh.close()
+	else:
+		try:
+			data = urllib.urlopen(args.location).read()
+		except IOError:
+			writeln("Can't read '" + args.location + "'!", sys.stderr)
+			sys.exit(2)
+
 	# read cherrytree file and parse it to the DOM
-	fh = open(args.filename)
-	dom = d.parseString(fh.read())
-	fh.close()
+	dom = d.parseString(data)
 
 	# raw - patch convertToHtml
 	if args.raw:
