@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.8.0"
-__date    = "23.05.2013"
+__version = "0.8.1"
+__date    = "29.05.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -45,7 +45,7 @@ except ImportError:
 #= Variables ===================================================================
 OUT_DIR = "output"
 TAB_SIZE = 4
-DONT_WRAP = ["h1", "h2", "h3", "pre", "center"] # do not wrap theese with <p>
+DONT_WRAP = ["h1", "h2", "h3", "pre", "center", "table"] # do not wrap theese with <p>
 HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <head>
@@ -329,24 +329,48 @@ def convertToHtml(dom, node_id):
 	# are not in the source as all other tags, but at the end. Instead of 
 	# <codebox> in the text, there is <rich_text justification="left"></rich_text>
 	# That needs to be replaced with <pre>
+	def processTable(table):
+		"Convert cherrytree table to HTML table."
 
-	# remove <codeboxes> from DOM, create new pre tags and put them into
-	# codeboxes[] variable
-	codeboxes = []
-	for codebox in node.find("codebox"):
-		el = d.HTMLElement("<pre>")
-		el.childs = codebox.childs[:]
-		el.params["syntax"] = codebox.params["syntax_highlighting"]
-		el.endtag = d.HTMLElement("</pre>")
-		codeboxes.append(el)
+		del table.params["char_offset"]
 
-		# remove original <codebox> from DOM
-		codebox.replaceWith(d.HTMLElement(""))
+		html_table = str(table)
+		
+		html_table = html_table.replace("<cell>", "<td>")
+		html_table = html_table.replace("</cell>", "</td>")
+		html_table = html_table.replace("<row>", "<tr>")
+		html_table = html_table.replace("</row>", "</tr>\n")
+		
+		return d.parseString(html_table)
 
-	# replace <rich_text justification="left"></rich_text> with <pre> tags
+	# create html versions of replacements_tagnames| tags and put them into 
+	# |replacements[]| variable
+	# remove |replacements_tagnames| from DOM
+	replacements = []
+	replacements_tagnames = ["codebox", "table"]
+	for replacement in node.find("", fn = lambda x: x.getTagName() in replacements_tagnames):
+		el = None
+
+		if replacement.getTagName() == "codebox":
+			el = d.HTMLElement("<pre>")
+			el.childs = replacement.childs[:]
+			el.params["syntax"] = replacement.params["syntax_highlighting"]
+			el.endtag = d.HTMLElement("</pre>")
+		elif replacement.getTagName() == "table":
+			el = processTable(replacement)
+		else:
+			raise ValueError("This shouldn't happend. If does, HTML parser is broken.")
+
+		replacements.append(el)
+
+		# remove original element (codebox/table) from DOM
+		replacement.replaceWith(d.HTMLElement(""))
+
+	# replace <rich_text justification="left"></rich_text> with tags from 
+	# |replacements|
 	cnt = 0
 	for j in node.find("rich_text", {"justification":"left"}):
-		j.replaceWith(codeboxes[cnt])
+		j.replaceWith(replacements[cnt])
 		cnt += 1
 	#===========================================================================
 
