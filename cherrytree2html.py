@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.8.1"
-__date    = "29.05.2013"
+__version = "0.8.2"
+__date    = "05.07.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -645,3 +645,4 @@ if __name__ == '__main__':
 			writeln("Saved to '" + nodename + "'")
 		else:
 			writeln(convertToHtml(dom, args.node))
+			writeln(COPYRIGHT)
