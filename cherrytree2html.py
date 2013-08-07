@@ -17,6 +17,7 @@ __email   = "bystrousak@kitakitsune.org"
 #= Imports =====================================================================
 import os
 import sys
+import urllib
 import os.path
 import argparse
 import unicodedata
@@ -92,8 +93,8 @@ def listNodes(dom):
 
 
 def __transformLink(tag, dom, node_id):
-	"""Transform <rich_text link="webs http://kitakitsune.org">odkaz</rich_text> to 
-	<a href="http://kitakitsune.org">odkaz</a>.
+	"""Transform <rich_text link="webs http://kitakitsune.org">odkaz</rich_text>
+	to <a href="http://kitakitsune.org">odkaz</a>.
 
 	Also some basic link handling, ala local links and links to other nodes."""
 
@@ -141,8 +142,8 @@ def __transformRichText(tag):
 	if len(tag.params) == 0:
 		return
 
-	# tags which contains nothing printable are converted just to its content (whitespaces) 
-	# "<h3> </h3>" -> " "
+	# tags which contains nothing printable are converted just to its content
+	# (whitespaces) "<h3> </h3>" -> " "
 	if tag.getContent().strip() == "":
 		tag.params = {}
 		return
@@ -192,7 +193,8 @@ def guessParagraphs(s):
 	def elementToP(el):
 		"""
 		Convert one element to <p>el</p>. Element is changed in parent.
-		Returns element (if you don't need it, just drop it, everything is changed in right place in parent already.)
+		Returns element (if you don't need it, just drop it, everything is 
+		changed in right place in parent already.)
 		"""
 
 		p = d.HTMLElement("<p>")
@@ -211,7 +213,8 @@ def guessParagraphs(s):
 
 	def elementsToP(els):
 		"""
-		Put array of elements into <p>. Result is put into els.parent, so you can just call this and don't care about rest.
+		Put array of elements into <p>. Result is put into els.parent, so you 
+		can just call this and don't care about rest.
 
 		Returns <p>els[:]</p>, just if you needed it.
 		"""
@@ -300,7 +303,13 @@ def guessParagraphs(s):
 		processBuffer(buff)
 
 	# remove blank <p>aragraphs
-	map(lambda x: x.replaceWith(d.HTMLElement("")), filter(lambda x: x.getContent().strip() == "", node.find("p")))
+	map(
+		lambda x: x.replaceWith(d.HTMLElement("")),
+		filter(
+			lambda x: x.getContent().strip() == "",
+			node.find("p")
+		)
+	)
 
 	# return "beautified" string
 	return str(node)                               \
@@ -551,6 +560,15 @@ if __name__ == '__main__':
 		default = False,
 		help    = "Print raw node source code (XML)."
 	)
+	parser.add_argument(
+		"-t",
+		"--template",
+		metavar = "template.html",
+		action  = "store",
+		type    = str,
+		default = None,
+		help    = "Use own template. Keywords: $title, $content, $copyright."
+	)
 	args = parser.parse_args()
 
 	if args.version:
@@ -574,6 +592,16 @@ if __name__ == '__main__':
 			data = urllib.urlopen(args.location).read()
 		except IOError:
 			writeln("Can't read '" + args.location + "'!", sys.stderr)
+			sys.exit(2)
+
+	# try read template
+	if args.template != None:
+		try:
+			f = open(args.template)
+			HTML_TEMPLATE = f.read()
+			f.close()
+		except IOError:
+			writeln("Can't read template '" + args.template "'!", sys.stderr)
 			sys.exit(2)
 
 	# read cherrytree file and parse it to the DOM
