@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.8.2"
-__date    = "05.07.2013"
+__version = "0.8.3"
+__date    = "08.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -601,7 +601,7 @@ if __name__ == '__main__':
 			HTML_TEMPLATE = f.read()
 			f.close()
 		except IOError:
-			writeln("Can't read template '" + args.template "'!", sys.stderr)
+			writeln("Can't read template '" + args.template + "'!", sys.stderr)
 			sys.exit(2)
 
 	# read cherrytree file and parse it to the DOM
