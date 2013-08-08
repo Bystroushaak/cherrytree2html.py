@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.8.3"
+__version = "0.8.4"
 __date    = "08.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -52,7 +52,7 @@ HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN
 <head>
 	<title>$title</title>
 	
-	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" type="text/css" href="$rootpath/style.css">
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
@@ -453,8 +453,10 @@ def getNodePath(dom, nodeid):
 def saveNode(dom, nodeid, name = None):
 	"Convert node to the HTML and save it to the HTML."
 
-	nodeid = str(nodeid)
+	nodeid   = str(nodeid)
 	filename = getNodePath(dom, nodeid)
+	rootpath = filename.count("/") * "../"
+	rootpath = rootpath[:-1] if rootpath.endswith("/") else rootpath
 
 	# ugly, bud increase parsing speed a bit
 	if name == None:
@@ -462,13 +464,14 @@ def saveNode(dom, nodeid, name = None):
 		name = name.params["name"]
 
 	# generate filename, convert html
-	data     = convertToHtml(dom, nodeid)
+	data = convertToHtml(dom, nodeid)
 
 	# apply html template
 	data = Template(HTML_TEMPLATE).substitute(
 		content   = data,
 		title     = name,
-		copyright = COPYRIGHT
+		copyright = COPYRIGHT,
+		rootpath  = rootpath
 	)
 
 	# check if directory tree exists - if not, create it
@@ -567,7 +570,7 @@ if __name__ == '__main__':
 		action  = "store",
 		type    = str,
 		default = None,
-		help    = "Use own template. Keywords: $title, $content, $copyright."
+		help    = "Use own template. Keywords: $title, $content, $copyright, $rootpath."
 	)
 	args = parser.parse_args()
 
