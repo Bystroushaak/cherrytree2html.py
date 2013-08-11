@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.10.0"
+__version = "0.10.1"
 __date    = "11.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -313,6 +313,13 @@ if __name__ == '__main__':
 		help    = "Print raw node source code (XML)."
 	)
 	parser.add_argument(
+		"-d",
+		"--disable-atom",
+		action  = "store_true",
+		default = False,
+		help    = "Disable support for Atom feeds."
+	)
+	parser.add_argument(
 		"-t",
 		"--template",
 		metavar = "template.html",
@@ -405,7 +412,8 @@ if __name__ == '__main__':
 		if not os.path.exists(OUT_DIR):
 			os.makedirs(OUT_DIR)
 
-		generateAtomFeed(dom) # TODO: přidat podmínku vypínající RSS
+		if not args.disable_atom:
+			generateAtomFeed(dom)
 
 		for n in dom.find("node"):
 			nodename = saveNode(dom, n.params["unique_id"].strip(), n.params["name"])
