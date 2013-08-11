@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.9.0"
-__date    = "09.08.2013"
+__version = "0.10.0"
+__date    = "11.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -14,10 +14,12 @@ __email   = "bystrousak@kitakitsune.org"
 # Notes:
 	# Podporu pro <ul><li>
 	# Obrázky.
+	# Nějakou ukázkovou .ctd
 #= Imports =====================================================================
 import os
 import sys
 import urllib
+import hashlib
 import os.path
 import argparse
 from string import Template
@@ -48,6 +50,15 @@ $copyright
 
 </body>
 </HTML>"""
+ATOM_ENTRY_TEMPLATE = """
+	<entry>
+		<title>$title</title>
+		<link href="$url"/>
+		<id>http://$uid/</id>
+		<updated>$updated</updated>
+		<summary>$content</summary>
+	</entry>
+"""
 COPYRIGHT = """
 <!-- 
 	Written in CherryTree, converted to HTML by cherrytree2html.py
@@ -118,6 +129,109 @@ def saveNode(dom, nodeid, name = None):
 	fh.close()
 
 	return filename
+
+
+
+def generateAtomFeed(dom):
+	# find RSS nodes (case insensitive)
+	rss_node = dom.find(
+		"",
+		fn = lambda x: 
+			x.getTagName() == "node" and
+			"name" in x.params and 
+			x.params["name"].lower() == "rss"
+	)
+
+	# don't continue, if there is no rss node
+	if len(rss_node) <= 0:
+		return None
+	rss_node = rss_node[0]
+
+
+	# iterate thru feed records
+	first = True
+	entries = ""
+	update_times = []
+	for node in rss_node.find("node"):
+		# skip first iteration (main node containing information about feed)
+		if first:
+			first = False
+			continue
+
+		# convert node from rich_text to html
+		html_node = d.parseString(convertToHtml(dom, node.params["unique_id"]))
+
+		if len(html_node.find("a")) > 0:
+			first_link = html_node.find("a")[0]
+		else:
+			raise ValueError("Item '" + node.params["name"] + "' doesn't have date and/or URL!")
+
+		updated = first_link.getContent()
+
+		# get url from first link, or set it to default
+		url  = first_link.params["href"] if "href" in first_link.params else ""
+		url  = "./" + url[5:] if url.startswith("./../") and len(url) > 5 else url
+
+		# remove first link (and it's content) from html code
+		if first_link != None:
+			first_link.replaceWith(d.HTMLElement(""))
+
+
+		entries += Template(ATOM_ENTRY_TEMPLATE).substitute(
+			title = node.params["name"],
+			url   = url,
+			uid   = hashlib.md5(
+				node.params["name"] +
+				str(url) +
+				str(updated)
+			).hexdigest(),
+			updated = updated,
+			content = html_node.getContent().replace("<p></p>", "").strip()
+		)
+
+		update_times.append(updated)
+
+		# remove node from DOM
+		node.replaceWith(d.HTMLElement(""))
+
+
+	# extract Atom template from .ctd
+	atom_template = rss_node.find("codebox")
+	if len(atom_template) <= 0:
+		raise ValueError("There is no codebox with Atom template!")
+	atom_template = atom_template[0].getContent()
+
+	for key, val in {"&lt;":"<", "&gt;":">", "&quot;":"\""}.iteritems():
+		atom_template = atom_template.replace(key, val)
+
+
+	atom_feed = Template(atom_template).substitute(
+		updated = update_times[0],
+		entries = entries
+	)
+
+	# get feed's filename - it is specified in atom template
+	filename = d.parseString(atom_feed).find("link")
+	if len(filename) <= 0:
+		raise ValueError("There has to be link in your Atom template!")
+	filename = filename[0]
+
+	if not "href" in filename.params:
+		raise ValueError("Link in you Atom template has to have 'href' parameter!")
+	filename = filename.params["href"].split("/")[-1]
+
+	if "." not in filename:
+		filename = "atom.xml"
+		writeln("There isn't specified filename of your feed, so I chosed default 'atom.xml'.")
+
+
+	fh = open(OUT_DIR + "/" + filename, "wt")
+	fh.write(atom_feed)
+	fh.close()
+
+
+	# get rid of RSS node
+	rss_node.replaceWith(d.HTMLElement(""))
 
 
 def rawXml(dom, node_id):
@@ -290,6 +404,8 @@ if __name__ == '__main__':
 	elif args.all:
 		if not os.path.exists(OUT_DIR):
 			os.makedirs(OUT_DIR)
+
+		generateAtomFeed(dom) # TODO: přidat podmínku vypínající RSS
 
 		for n in dom.find("node"):
 			nodename = saveNode(dom, n.params["unique_id"].strip(), n.params["name"])
