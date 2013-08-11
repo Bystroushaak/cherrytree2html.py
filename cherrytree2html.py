@@ -15,6 +15,8 @@ __email   = "bystrousak@kitakitsune.org"
 	# Podporu pro <ul><li>
 	# Obrázky.
 	# Nějakou ukázkovou .ctd
+	# TODO: sortování rss podle data
+	# TODO: CSS a HTML template do nody?
 #= Imports =====================================================================
 import os
 import sys
@@ -32,7 +34,7 @@ from richtextools import *
 #= Variables ===================================================================
 OUT_DIR = "output"
 TAB_SIZE = 4
-
+HTML_ENTITIES = {"&lt;":"<", "&gt;":">", "&quot;":"\""}
 HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <head>
@@ -56,7 +58,7 @@ ATOM_ENTRY_TEMPLATE = """
 		<link href="$url"/>
 		<id>http://$uid/</id>
 		<updated>$updated</updated>
-		<summary>$content</summary>
+		<content type="html">$content</content>
 	</entry>
 """
 COPYRIGHT = """
@@ -176,6 +178,11 @@ def generateAtomFeed(dom):
 		if first_link != None:
 			first_link.replaceWith(d.HTMLElement(""))
 
+		# preprocess content
+		content = html_node.getContent().replace("<p></p>", "").strip()
+		for key, val in HTML_ENTITIES.iteritems():
+			content = content.replace(val, key)
+
 
 		entries += Template(ATOM_ENTRY_TEMPLATE).substitute(
 			title = node.params["name"],
@@ -186,7 +193,7 @@ def generateAtomFeed(dom):
 				str(updated)
 			).hexdigest(),
 			updated = updated,
-			content = html_node.getContent().replace("<p></p>", "").strip()
+			content = content
 		)
 
 		update_times.append(updated)
@@ -201,7 +208,7 @@ def generateAtomFeed(dom):
 		raise ValueError("There is no codebox with Atom template!")
 	atom_template = atom_template[0].getContent()
 
-	for key, val in {"&lt;":"<", "&gt;":">", "&quot;":"\""}.iteritems():
+	for key, val in HTML_ENTITIES.iteritems():
 		atom_template = atom_template.replace(key, val)
 
 
