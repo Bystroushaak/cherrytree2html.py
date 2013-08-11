@@ -11,7 +11,11 @@ __email   = "bystrousak@kitakitsune.org"
 # Created in Sublime text 2 editor.
 #
 #= Imports =====================================================================
+import sys
+
+
 import parser as d
+from parser import writeln
 from getnodepath import *
 from guessparagraphs import *
 
