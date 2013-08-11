@@ -1,0 +1,34 @@
+<?xml version="1.0" ?><cherrytree><node name="RSS" prog_lang="custom-colors" readonly="False" tags="" unique_id="1"><rich_text>RSS generator works in really simple way. It looks for Atom xml template in node named RSS (case insensitive). This template have to be in codebox. 
+
+You can change almost everything, but don't touch $updated and $entries variables.
+
+</rich_text><rich_text justification="left"></rich_text><rich_text> </rich_text><codebox char_offset="234" frame_height="220" frame_width="700" highlight_brackets="False" show_line_numbers="False" syntax_highlighting="xml" width_in_pixels="True">&lt;feed xmlns=&quot;http://www.w3.org/2005/Atom&quot; xml:lang=&quot;cs-CZ&quot;&gt;
+	&lt;title&gt;Feeds title&lt;/title&gt;
+	&lt;link href=&quot;http://your.page/atomname.xml&quot; rel=&quot;self&quot; /&gt;
+	&lt;subtitle type=&quot;text&quot;&gt;Bystroushaakovo články o programování.&lt;/subtitle&gt;
+
+	&lt;id&gt;http://your.page/will/be/enough&lt;/id&gt;
+	&lt;updated&gt;$updated&lt;/updated&gt;
+	&lt;author&gt;
+		&lt;name&gt;Your name&lt;/name&gt;
+	&lt;/author&gt;
+
+	$entries
+&lt;/feed&gt; </codebox><node name="First item" prog_lang="custom-colors" readonly="False" tags="" unique_id="5"><rich_text link="webs https://github.com/Bystroushaak/cherrytree2html.py">2013-08-11T08:06:00+01:00</rich_text><rich_text>
+
+Each Atom entry will have title |nodename|.
+
+Node pubDate is parsed from </rich_text><rich_text weight="heavy">first link</rich_text><rich_text> found in node. It </rich_text><rich_text underline="single" weight="heavy">has to be</rich_text><rich_text> in </rich_text><rich_text link="webs http://www.ietf.org/rfc/rfc3339">RFC3339</rich_text><rich_text> format! Format is very simple: YYYY-mm-ddTHH:MM:SS+timezone. URL of link is taken as entry url.
+
+Everything else is considered as content of Atom entry.
+
+Well, and that's all. Simple, isn't it?</rich_text></node></node><node name="index" prog_lang="custom-colors" readonly="False" tags="" unique_id="2"><rich_text>Here should be content of your first page.
+
+There is also </rich_text><rich_text link="node 3">example category</rich_text><rich_text>.</rich_text></node><node name="Category" prog_lang="custom-colors" readonly="False" tags="" unique_id="3"><rich_text>Here is something like links for subpages:
+
+• </rich_text><rich_text link="node 4">First subpage</rich_text><rich_text>
+• </rich_text><rich_text link="node 6">Second subpage</rich_text><node name="With few subpages" prog_lang="custom-colors" readonly="False" tags="" unique_id="4"><rich_text>1
+
+</rich_text><rich_text link="node 3">Backlink</rich_text><rich_text>.</rich_text></node><node name="Another subpage" prog_lang="custom-colors" readonly="False" tags="" unique_id="6"><rich_text>2
+
+</rich_text><rich_text link="node 3">Backlink</rich_text><rich_text>.</rich_text></node></node></cherrytree>
