@@ -15,6 +15,7 @@ __email   = "bystrousak@kitakitsune.org"
 	# Podporu pro <ul><li>
 	# Obrázky.
 	# TODO: sortování rss podle data
+	# TODO: dotahování jména atom feedu z html templaty, nebo naopak z rss templaty
 #= Imports =====================================================================
 import os
 import sys
