@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.10.1"
-__date    = "11.08.2013"
+__version = "0.11.0"
+__date    = "20.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -133,22 +133,96 @@ def saveNode(dom, nodeid, name = None):
 	return filename
 
 
-
-def generateAtomFeed(dom):
-	# find RSS nodes (case insensitive)
-	rss_node = dom.find(
+def __getFirstNodeByCIName(nodename):
+	"find RSS nodes (case insensitive)"
+	out_node = dom.find(
 		"",
 		fn = lambda x: 
 			x.getTagName() == "node" and
 			"name" in x.params and 
-			x.params["name"].lower() == "rss"
+			x.params["name"].lower() == nodename
 	)
 
-	# don't continue, if there is no rss node
-	if len(rss_node) <= 0:
+	if len(out_node) <= 0:
 		return None
-	rss_node = rss_node[0]
+	
+	return out_node[0]
 
+
+def getUserTemplate(dom, name):
+	""""
+	Return users template identified by name (case insensitive).
+
+	Template is then converted to html.
+
+	Returns: (template_node, html_content)
+	"""
+	template_node = __getFirstNodeByCIName(name)
+
+	# don't continue, if there is no rss node
+	if template_node is None:
+		return (None, None)
+
+	html_content = d.parseString(convertToHtml(dom, template_node.params["unique_id"]))
+
+	# preprocess content
+	content = html_content.getContent().replace("<p></p>", "").strip()
+	for key, val in HTML_ENTITIES.iteritems():
+		content = content.replace(val, key)
+
+	return (template_node, html_content)
+
+
+
+# CSS handling #################################################################
+def getUserCSS(dom):
+	"Check if there is node called CSS. If there is, return first codebox from that node."
+	css_node, css_html = getUserTemplate(dom, "css")
+
+	if css_node is None:
+		return None
+	css = css_node.find("codebox")
+
+	if len(css) <= 0:
+		return None
+	css = css[0].getContent()
+
+	# remove CSS node from document
+	css_node.replaceWith(d.HTMLElement(""))
+
+	return css
+
+
+def saveUserCSS(html_template, css):
+	""""
+	Save |css|.
+	Try parse filename from |html_template|, if there is proper <link rel='stylesheet'> tag.
+	Default "style.css".
+	"""
+	dom = d.parseString(html_template)
+	css_name = dom.find("link", {"rel":"stylesheet"})
+
+	if len(css_name) <= 0:
+		css_name = "style.css"
+	else:
+		css_name = css_name[0]
+		css_name = css_name.params["href"] if "href" in css_name.params else "style.css"
+
+	css_name = os.path.basename(css_name)
+
+	fh = open(OUT_DIR + "/" + css_name, "wt")
+	fh.write(css)
+	fh.close()
+# /CSS hadling #################################################################
+
+
+
+def generateAtomFeed(dom):
+	rss_node = __getFirstNodeByCIName("rss")
+
+	# don't continue, if there is no rss node
+	if rss_node is None:
+		return None
 
 	# iterate thru feed records
 	first = True
@@ -224,7 +298,7 @@ def generateAtomFeed(dom):
 	filename = filename[0]
 
 	if not "href" in filename.params:
-		raise ValueError("Link in you Atom template has to have 'href' parameter!")
+		raise ValueError("Link in your Atom template has to have 'href' parameter!")
 	filename = filename.params["href"].split("/")[-1]
 
 	if "." not in filename:
@@ -421,6 +495,11 @@ if __name__ == '__main__':
 
 		if not args.disable_atom:
 			generateAtomFeed(dom)
+
+		css = getUserCSS(dom)
+		if not css is None:
+			saveUserCSS(HTML_TEMPLATE, css)
+		# getTemplate()
 
 		for n in dom.find("node"):
 			nodename = saveNode(dom, n.params["unique_id"].strip(), n.params["name"])
