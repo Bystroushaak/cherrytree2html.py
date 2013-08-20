@@ -1,6 +1,17 @@
-<?xml version="1.0" ?><cherrytree><node name="RSS" prog_lang="custom-colors" readonly="False" tags="" unique_id="1"><rich_text>RSS generator works in really simple way. It looks for Atom xml template in node named RSS (case insensitive). This template have to be in codebox. 
+<?xml version="1.0" ?><cherrytree><node name="index" prog_lang="custom-colors" readonly="False" tags="" unique_id="2"><rich_text>Here should be content of your first page.
 
-You can change almost everything, but don't touch $updated and $entries variables.
+There is also </rich_text><rich_text link="node 3">example category</rich_text><rich_text>.</rich_text></node><node name="Category" prog_lang="custom-colors" readonly="False" tags="" unique_id="3"><rich_text>Here is something like links for subpages:
+
+• </rich_text><rich_text link="node 4">First subpage</rich_text><rich_text>
+• </rich_text><rich_text link="node 6">Second subpage</rich_text><rich_text>
+
+[</rich_text><rich_text link="node 2">Back to index</rich_text><rich_text>]</rich_text><node name="With few subpages" prog_lang="custom-colors" readonly="False" tags="" unique_id="4"><rich_text>First subpage.
+
+[</rich_text><rich_text link="node 3">backlink</rich_text><rich_text>]</rich_text></node><node name="Another subpage" prog_lang="custom-colors" readonly="False" tags="" unique_id="6"><rich_text>Second subpage.
+
+[</rich_text><rich_text link="node 3">backlink</rich_text><rich_text>]</rich_text></node></node><node name="__RSS" prog_lang="custom-colors" readonly="False" tags="" unique_id="1"><rich_text>RSS generator works in really simple way. It looks for Atom xml template in node named RSS (case insensitive). This template have to be in codebox. 
+
+You can change almost everything, but don't touch </rich_text><rich_text family="monospace">$updated</rich_text><rich_text> and </rich_text><rich_text family="monospace">$entries</rich_text><rich_text> variables.
 
 </rich_text><rich_text justification="left"></rich_text><rich_text> </rich_text><codebox char_offset="234" frame_height="220" frame_width="700" highlight_brackets="False" show_line_numbers="False" syntax_highlighting="xml" width_in_pixels="True">&lt;feed xmlns=&quot;http://www.w3.org/2005/Atom&quot; xml:lang=&quot;cs-CZ&quot;&gt;
 	&lt;title&gt;Feeds title&lt;/title&gt;
@@ -18,17 +29,53 @@ You can change almost everything, but don't touch $updated and $entries variable
 
 Each Atom entry will have title |nodename|.
 
-Node pubDate is parsed from </rich_text><rich_text weight="heavy">first link</rich_text><rich_text> found in node. It </rich_text><rich_text underline="single" weight="heavy">has to be</rich_text><rich_text> in </rich_text><rich_text link="webs http://www.ietf.org/rfc/rfc3339">RFC3339</rich_text><rich_text> format! Format is very simple: YYYY-mm-ddTHH:MM:SS+timezone. URL of link is taken as entry url.
+pubDate of each record is parsed from </rich_text><rich_text weight="heavy">first link</rich_text><rich_text> found in node. It </rich_text><rich_text underline="single" weight="heavy">has to be</rich_text><rich_text> in </rich_text><rich_text link="webs http://www.ietf.org/rfc/rfc3339">RFC3339</rich_text><rich_text> format (i know, this isn't easy to write, but I have to get this information from somewhere)! Format is very simple: YYYY-mm-ddTHH:MM:SS+timezone. 
 
-Everything else is considered as content of Atom entry.
+URL of first link (date, remember?) is taken as entry url, everything else is considered as content of Atom's entry.
 
-Well, and that's all. Simple, isn't it?</rich_text></node></node><node name="index" prog_lang="custom-colors" readonly="False" tags="" unique_id="2"><rich_text>Here should be content of your first page.
+Well, that's all. Simple, isn't it?</rich_text></node><node name="Added support for templates!" prog_lang="custom-colors" readonly="False" tags="" unique_id="9"><rich_text link="node 2">2013-08-20T23:46:00+01:00</rich_text><rich_text>
 
-There is also </rich_text><rich_text link="node 3">example category</rich_text><rich_text>.</rich_text></node><node name="Category" prog_lang="custom-colors" readonly="False" tags="" unique_id="3"><rich_text>Here is something like links for subpages:
+Added support for own templates, see __CSS and __TEMPLATE node.</rich_text></node></node><node name="__CSS" prog_lang="custom-colors" readonly="False" tags="" unique_id="7"><rich_text>You can put your CSS into first codebox in this node.
 
-• </rich_text><rich_text link="node 4">First subpage</rich_text><rich_text>
-• </rich_text><rich_text link="node 6">Second subpage</rich_text><node name="With few subpages" prog_lang="custom-colors" readonly="False" tags="" unique_id="4"><rich_text>1
+It will be saved as </rich_text><rich_text family="monospace">style.css</rich_text><rich_text> in root of your webpage, or in </rich_text><rich_text family="monospace">basename(href_location)</rich_text><rich_text> of your </rich_text><rich_text family="monospace">&lt;meta rel=&quot;link&quot; href=&quot;location&quot;&gt;</rich_text><rich_text> in your own __TEMPLATE node.
 
-</rich_text><rich_text link="node 3">Backlink</rich_text><rich_text>.</rich_text></node><node name="Another subpage" prog_lang="custom-colors" readonly="False" tags="" unique_id="6"><rich_text>2
+</rich_text><rich_text justification="left"></rich_text><rich_text>
 
-</rich_text><rich_text link="node 3">Backlink</rich_text><rich_text>.</rich_text></node></node></cherrytree>
+Remember - if you don't put codebox here, node will be saved to disk as regular webpage named </rich_text><rich_text family="monospace">__CSS.html</rich_text><rich_text>!</rich_text><codebox char_offset="212" frame_height="100" frame_width="700" highlight_brackets="False" show_line_numbers="False" syntax_highlighting="css" width_in_pixels="True">body {
+	display: block;
+	margin: 0 auto;
+	width: 800px;
+	padding: 10px;
+}</codebox></node><node name="__TEMPLATE" prog_lang="custom-colors" readonly="False" tags="" unique_id="8"><rich_text>Here can be your HTML template, which will be used for each page.
+
+Variables:
+	</rich_text><rich_text family="monospace">$title</rich_text><rich_text>			= nodename
+	</rich_text><rich_text family="monospace">$rootpath</rich_text><rich_text>		= </rich_text><rich_text weight="heavy">relative</rich_text><rich_text> path to the root of web 
+	</rich_text><rich_text family="monospace">$content</rich_text><rich_text>		= everything in node
+	</rich_text><rich_text family="monospace">$copyright</rich_text><rich_text>	= HTML </rich_text><rich_text weight="heavy">comment</rich_text><rich_text> containing informations about cherrytree2html.py and cherrytree. Backlinks included. 
+
+</rich_text><rich_text family="monospace">basename(href)</rich_text><rich_text> of your stylesheet definition is used for style name.
+
+Example:
+
+</rich_text><rich_text justification="left"></rich_text><rich_text>
+
+Content of the template have to be in codebox, or this page will be saved to disk as </rich_text><rich_text family="monospace">__TEMPLATE.html!</rich_text><codebox char_offset="373" frame_height="310" frame_width="700" highlight_brackets="False" show_line_numbers="False" syntax_highlighting="html" width_in_pixels="True">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;
+&lt;HTML&gt;
+&lt;head&gt;
+	&lt;title&gt;$title&lt;/title&gt;
+	
+	&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+	
+	&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$rootpath/style.css&quot; /&gt;
+	&lt;link rel=&quot;alternate&quot;  type=&quot;application/atom+xml&quot; href=&quot;atomname.xml&quot; /&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+
+$content
+
+$copyright
+
+&lt;/body&gt;
+&lt;/HTML&gt;</codebox></node></cherrytree>
