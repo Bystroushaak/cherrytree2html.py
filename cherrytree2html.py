@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "0.11.0"
+__version = "1.0.0"
 __date    = "20.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -14,61 +14,24 @@ __email   = "bystrousak@kitakitsune.org"
 # Notes:
 	# Podporu pro <ul><li>
 	# Obrázky.
-	# Nějakou ukázkovou .ctd
 	# TODO: sortování rss podle data
-	# TODO: CSS a HTML template do nody?
 #= Imports =====================================================================
 import os
 import sys
 import urllib
-import hashlib
+
 import os.path
 import argparse
-from string import Template
 
 
+
+# splitted into smaller modules to prevent bloating
 from richtextools import *
 
 
 
 #= Variables ===================================================================
 OUT_DIR = "output"
-TAB_SIZE = 4
-HTML_ENTITIES = {"&lt;":"<", "&gt;":">", "&quot;":"\""}
-HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<head>
-	<title>$title</title>
-	
-	<link rel="stylesheet" type="text/css" href="$rootpath/style.css">
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-</head>
-
-<body>
-
-$content
-
-$copyright
-
-</body>
-</HTML>"""
-ATOM_ENTRY_TEMPLATE = """
-	<entry>
-		<title>$title</title>
-		<link href="$url"/>
-		<id>http://$uid/</id>
-		<updated>$updated</updated>
-		<content type="html">$content</content>
-	</entry>
-"""
-COPYRIGHT = """
-<!-- 
-	Written in CherryTree, converted to HTML by cherrytree2html.py
-
-	- http://www.giuspen.com/cherrytree/
-	- https://github.com/Bystroushaak/cherrytree2html.py
--->
-"""
 
 
 
@@ -95,224 +58,6 @@ def listNodes(dom):
 		ids.append(int(node.params["unique_id"]))
 
 	return ids, nodes
-
-
-def saveNode(dom, nodeid, name = None):
-	"Convert node to the HTML and save it to the HTML."
-
-	nodeid   = str(nodeid)
-	filename = getNodePath(dom, nodeid)
-	rootpath = filename.count("/") * "../"
-	rootpath = rootpath[:-1] if rootpath.endswith("/") else rootpath
-
-	# ugly, bud increase parsing speed a bit
-	if name == None:
-		name = dom.find("node", {"unique_id" : nodeid})[0]
-		name = name.params["name"]
-
-	# generate filename, convert html
-	data = convertToHtml(dom, nodeid)
-
-	# apply html template
-	data = Template(HTML_TEMPLATE).substitute(
-		content   = data,
-		title     = name,
-		copyright = COPYRIGHT,
-		rootpath  = rootpath
-	)
-
-	# check if directory tree exists - if not, create it
-	directory = OUT_DIR + "/" + os.path.dirname(filename)
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-
-	fh = open(OUT_DIR + "/" + filename, "wt")
-	fh.write(data)
-	fh.close()
-
-	return filename
-
-
-def __getFirstNodeByCIName(nodename):
-	"find RSS nodes (case insensitive)"
-	out_node = dom.find(
-		"",
-		fn = lambda x: 
-			x.getTagName() == "node" and
-			"name" in x.params and 
-			x.params["name"].lower() == nodename
-	)
-
-	if len(out_node) <= 0:
-		return None
-	
-	return out_node[0]
-
-
-def getUserTemplate(dom, name):
-	""""
-	Return users template identified by name (case insensitive).
-
-	Template is then converted to html.
-
-	Returns: (template_node, html_content)
-	"""
-	template_node = __getFirstNodeByCIName(name)
-
-	# don't continue, if there is no rss node
-	if template_node is None:
-		return (None, None)
-
-	html_content = d.parseString(convertToHtml(dom, template_node.params["unique_id"]))
-
-	# preprocess content
-	content = html_content.getContent().replace("<p></p>", "").strip()
-	for key, val in HTML_ENTITIES.iteritems():
-		content = content.replace(val, key)
-
-	return (template_node, html_content)
-
-
-
-# CSS handling #################################################################
-def getUserCSS(dom):
-	"Check if there is node called CSS. If there is, return first codebox from that node."
-	css_node, css_html = getUserTemplate(dom, "css")
-
-	if css_node is None:
-		return None
-	css = css_node.find("codebox")
-
-	if len(css) <= 0:
-		return None
-	css = css[0].getContent()
-
-	# remove CSS node from document
-	css_node.replaceWith(d.HTMLElement(""))
-
-	return css
-
-
-def saveUserCSS(html_template, css):
-	""""
-	Save |css|.
-	Try parse filename from |html_template|, if there is proper <link rel='stylesheet'> tag.
-	Default "style.css".
-	"""
-	dom = d.parseString(html_template)
-	css_name = dom.find("link", {"rel":"stylesheet"})
-
-	if len(css_name) <= 0:
-		css_name = "style.css"
-	else:
-		css_name = css_name[0]
-		css_name = css_name.params["href"] if "href" in css_name.params else "style.css"
-
-	css_name = os.path.basename(css_name)
-
-	fh = open(OUT_DIR + "/" + css_name, "wt")
-	fh.write(css)
-	fh.close()
-# /CSS hadling #################################################################
-
-
-
-def generateAtomFeed(dom):
-	rss_node = __getFirstNodeByCIName("rss")
-
-	# don't continue, if there is no rss node
-	if rss_node is None:
-		return None
-
-	# iterate thru feed records
-	first = True
-	entries = ""
-	update_times = []
-	for node in rss_node.find("node"):
-		# skip first iteration (main node containing information about feed)
-		if first:
-			first = False
-			continue
-
-		# convert node from rich_text to html
-		html_node = d.parseString(convertToHtml(dom, node.params["unique_id"]))
-
-		if len(html_node.find("a")) > 0:
-			first_link = html_node.find("a")[0]
-		else:
-			raise ValueError("Item '" + node.params["name"] + "' doesn't have date and/or URL!")
-
-		updated = first_link.getContent()
-
-		# get url from first link, or set it to default
-		url  = first_link.params["href"] if "href" in first_link.params else ""
-		url  = "./" + url[5:] if url.startswith("./../") and len(url) > 5 else url
-
-		# remove first link (and it's content) from html code
-		if first_link != None:
-			first_link.replaceWith(d.HTMLElement(""))
-
-		# preprocess content
-		content = html_node.getContent().replace("<p></p>", "").strip()
-		for key, val in HTML_ENTITIES.iteritems():
-			content = content.replace(val, key)
-
-
-		entries += Template(ATOM_ENTRY_TEMPLATE).substitute(
-			title = node.params["name"],
-			url   = url,
-			uid   = hashlib.md5(
-				node.params["name"] +
-				str(url) +
-				str(updated)
-			).hexdigest(),
-			updated = updated,
-			content = content
-		)
-
-		update_times.append(updated)
-
-		# remove node from DOM
-		node.replaceWith(d.HTMLElement(""))
-
-
-	# extract Atom template from .ctd
-	atom_template = rss_node.find("codebox")
-	if len(atom_template) <= 0:
-		raise ValueError("There is no codebox with Atom template!")
-	atom_template = atom_template[0].getContent()
-
-	for key, val in HTML_ENTITIES.iteritems():
-		atom_template = atom_template.replace(key, val)
-
-
-	atom_feed = Template(atom_template).substitute(
-		updated = update_times[0],
-		entries = entries
-	)
-
-	# get feed's filename - it is specified in atom template
-	filename = d.parseString(atom_feed).find("link")
-	if len(filename) <= 0:
-		raise ValueError("There has to be link in your Atom template!")
-	filename = filename[0]
-
-	if not "href" in filename.params:
-		raise ValueError("Link in your Atom template has to have 'href' parameter!")
-	filename = filename.params["href"].split("/")[-1]
-
-	if "." not in filename:
-		filename = "atom.xml"
-		writeln("There isn't specified filename of your feed, so I chosed default 'atom.xml'.")
-
-
-	fh = open(OUT_DIR + "/" + filename, "wt")
-	fh.write(atom_feed)
-	fh.close()
-
-
-	# get rid of RSS node
-	rss_node.replaceWith(d.HTMLElement(""))
 
 
 def rawXml(dom, node_id):
@@ -483,7 +228,7 @@ if __name__ == '__main__':
 				continue
 
 		if args.save:
-			nodename = saveNode(dom, nodeid)
+			nodename = saveNode(dom, nodeid, savenode.HTML_TEMPLATE, OUT_DIR)
 
 			writeln("\nSaved to '" + nodename + "'")
 		else:
@@ -494,15 +239,30 @@ if __name__ == '__main__':
 			os.makedirs(OUT_DIR)
 
 		if not args.disable_atom:
-			generateAtomFeed(dom)
+			generateAtomFeed(dom, OUT_DIR)
 
-		css = getUserCSS(dom)
+		# check if there is user's own html template - if so, use it
+		html_template = savenode.HTML_TEMPLATE
+		template = getUserCodeboxTemplate(dom, "__template")
+		if template != None:
+			html_template = template
+
+		# check for user's css style
+		css = getUserCodeboxTemplate(dom, "__css")
 		if not css is None:
-			saveUserCSS(HTML_TEMPLATE, css)
-		# getTemplate()
+			saveUserCSS(html_template, css, OUT_DIR)
 
+
+		# convert all nodes to html
 		for n in dom.find("node"):
-			nodename = saveNode(dom, n.params["unique_id"].strip(), n.params["name"])
+			nodename = saveNode(
+				dom, 
+				nodeid        = n.params["unique_id"].strip(),
+				html_template = html_template,
+				out_dir       = OUT_DIR,
+				name          = n.params["name"]
+			)
+
 			writeln("Node '" + nodename + "' saved.")
 
 		sys.exit(0)
@@ -516,7 +276,12 @@ if __name__ == '__main__':
 			sys.exit(3)
 
 		if args.save:
-			nodename = saveNode(dom, args.node)
+			nodename = saveNode(
+				dom,
+				nodeid        = args.node,
+				html_template = savenode.HTML_TEMPLATE,
+				out_dir       = OUT_DIR
+			)
 
 			writeln("Saved to '" + nodename + "'")
 		else:

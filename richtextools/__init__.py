@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__version = "1.0.0"
-__date    = "09.08.2013"
+__version = "1.1.0"
+__date    = "20.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -12,9 +12,12 @@ __email   = "bystrousak@kitakitsune.org"
 #
 #= Imports =====================================================================
 import parser as d
-from richtextools    import *
-from getnodepath     import *
-from guessparagraphs import *
+from savenode        import saveNode
+from converttohtml   import convertToHtml
+
+from usertemplates import saveUserCSS
+from usertemplates import generateAtomFeed
+from usertemplates import getUserCodeboxTemplate
 
 
 

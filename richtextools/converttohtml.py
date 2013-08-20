@@ -15,8 +15,8 @@ import sys
 
 
 import parser as d
-from parser import writeln
-from getnodepath import *
+from parser          import writeln
+from getnodepath     import *
 from guessparagraphs import *
 
 
