@@ -26,8 +26,10 @@ HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN
 <head>
 	<title>$title</title>
 	
-	<link rel="stylesheet" type="text/css" href="$rootpath/style.css">
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+	<link rel="stylesheet" type="text/css"             href="$rootpath/style.css" />
+	<link rel="alternate"  type="application/atom+xml" href="atom.xml" />
 </head>
 
 <body>
@@ -55,8 +57,10 @@ def saveNode(dom, nodeid, html_template, out_dir, name = None):
 
 	nodeid   = str(nodeid)
 	filename = getNodePath(dom, nodeid)
+
 	rootpath = filename.count("/") * "../"
 	rootpath = rootpath[:-1] if rootpath.endswith("/") else rootpath
+	rootpath = "." if rootpath == "" else rootpath
 
 	# ugly, bud increase parsing speed a bit
 	if name == None:
