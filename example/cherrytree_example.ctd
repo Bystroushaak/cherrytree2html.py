@@ -1,4 +1,6 @@
-<?xml version="1.0" ?><cherrytree><node name="index" prog_lang="custom-colors" readonly="False" tags="" unique_id="2"><rich_text>Here should be content of your first page.
+<?xml version="1.0" ?><cherrytree><node name="First node" prog_lang="custom-colors" readonly="False" tags="filename:index.html" unique_id="2"><rich_text>Here should be content of your first page.
+
+Notice that this node will have filename different from nodename when converted to html. That is because there is tag </rich_text><rich_text family="monospace">filename:index.html</rich_text><rich_text> in node search parameters, which can be shown if you press F2 in CherryTree.
 
 There is also </rich_text><rich_text link="node 3">example category</rich_text><rich_text>.</rich_text></node><node name="Category" prog_lang="custom-colors" readonly="False" tags="" unique_id="3"><rich_text>Here is something like links for subpages:
 
@@ -68,7 +70,7 @@ Content of the template have to be in codebox, or this page will be saved to dis
 	&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
 	
 	&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$rootpath/style.css&quot; /&gt;
-	&lt;link rel=&quot;alternate&quot;  type=&quot;application/atom+xml&quot; href=&quot;atomname.xml&quot; /&gt;
+	&lt;link rel=&quot;alternate&quot;  type=&quot;application/atom+xml&quot; href=&quot;$rootpath/atomname.xml&quot; /&gt;
 &lt;/head&gt;
 
 &lt;body&gt;
