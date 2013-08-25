@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "1.0.4"
+__version = "1.1.0"
 __date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -208,6 +208,9 @@ if __name__ == '__main__':
 		if not os.path.exists(OUT_DIR):
 			os.makedirs(OUT_DIR)
 
+		# remove nodes which names starts with __ (with exception of usertemplates.SPECIAL_NODENAMES)
+		removeSpecialNodenames(dom)
+
 		generateAtomFeed(dom, OUT_DIR)
 
 		# check if there is user's own html template - if so, use it
@@ -215,6 +218,7 @@ if __name__ == '__main__':
 		template = getUserCodeboxTemplate(dom, "__template")
 		if template != None:
 			html_template = template
+
 
 		# check for user's css style
 		css = getUserCodeboxTemplate(dom, "__css")

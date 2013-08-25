@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__version = "1.0.0"
-__date    = "20.08.2013"
+__version = "1.1.0"
+__date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -24,6 +24,7 @@ from converttohtml import convertToHtml
 
 #= Variables ===================================================================
 HTML_ENTITIES = {"&lt;":"<", "&gt;":">", "&quot;":"\""}
+SPECIAL_NODENAMES = ["__CSS", "__RSS", "__TEMPLATE"]
 ATOM_ENTRY_TEMPLATE = """
 	<entry>
 		<title>$title</title>
@@ -107,6 +108,7 @@ def getUserCodeboxTemplate(dom, name):
 	return template
 
 
+
 def saveUserCSS(html_template, css, out_dir):
 	""""
 	Save |css|.
@@ -127,6 +129,22 @@ def saveUserCSS(html_template, css, out_dir):
 	fh = open(out_dir + "/" + css_name, "wt")
 	fh.write(css)
 	fh.close()
+
+
+
+def removeSpecialNodenames(dom):
+	special_nodes = dom.find(
+		"",
+		fn = lambda x: 
+			x.getTagName() == "node" and
+			"name" in x.params and
+			x.params["name"].startswith("__") and 
+			x.params["name"].upper() not in SPECIAL_NODENAMES
+	)
+
+	# remove matching nodes
+	for special_node in special_nodes:
+		special_node.replaceWith(d.HTMLElement(""))
 
 
 

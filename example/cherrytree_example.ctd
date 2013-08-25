@@ -3,7 +3,9 @@ There should be content of your webpages.
 
 Notice that this node will have filename different from nodename when converted to html. That is because there is tag </rich_text><rich_text family="monospace">filename:index.html</rich_text><rich_text> in node search parameters, which can be shown if you press F2 in CherryTree.
 
-There is also </rich_text><rich_text link="node 3">example category</rich_text><rich_text>.</rich_text></node><node name="Category" prog_lang="custom-colors" readonly="False" tags="" unique_id="3"><rich_text>Here is something like links for subpages:
+There is also </rich_text><rich_text link="node 3">example category</rich_text><rich_text>.</rich_text><node name="__TODO" prog_lang="custom-colors" readonly="False" tags="" unique_id="10"><rich_text>This is not a special node - all nodes* which starts with </rich_text><rich_text family="monospace">__</rich_text><rich_text> are ignored and they are not converted to html. 
+
+*With exception of __RSS, __CSS &amp; __TEMPLATE.</rich_text></node></node><node name="Category" prog_lang="custom-colors" readonly="False" tags="" unique_id="3"><rich_text>Here is something like links for subpages:
 
 • </rich_text><rich_text link="node 4">First subpage</rich_text><rich_text>
 • </rich_text><rich_text link="node 6">Second subpage</rich_text><rich_text>
