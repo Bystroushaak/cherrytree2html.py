@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__version = "1.1.0"
+__version = "1.2.0"
 __date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -21,7 +21,7 @@ import parser as d
 
 
 #= Functions & objects =========================================================
-def __utfToFilename(nodename):
+def utfToFilename(nodename):
 	"Convert UTF nodename to ASCII."
 
 	intab   = """ ?,@#$%^&*{}[]'"><°~\\|	"""
@@ -75,7 +75,7 @@ def getNodePath(dom, nodeid):
 		path += "/" if path.strip() != "" else ""
 		path += new_filename
 
-	return __utfToFilename(path)
+	return utfToFilename(path)
 
 
 
