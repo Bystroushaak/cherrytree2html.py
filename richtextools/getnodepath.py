@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__version = "1.0.0"
-__date    = "09.08.2013"
+__version = "1.1.0"
+__date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -11,6 +11,7 @@ __email   = "bystrousak@kitakitsune.org"
 # Created in Sublime text 2 editor.
 #
 #= Imports =====================================================================
+import os.path
 import unicodedata
 from string import maketrans
 
@@ -44,6 +45,15 @@ def getNodePath(dom, nodeid):
 	# get reference to node
 	node = dom.find("node", {"unique_id" : str(nodeid)})[0]
 
+	# check for filename in tags
+	new_filename = None
+	if "tags" in node.params and node.params["tags"].strip() != "":  # if tags are in node definition
+		for i in node.params["tags"].split():                        # go thru tags
+			if i.startswith("filename:"):                            # look for tag which starts with filename:
+				i = i.split(":")
+				new_filename = i[1] if len(i) > 1 else None
+				break
+
 	# does this node contain another nodes?
 	endpoint = len(node.find("node")) <= 1
 
@@ -58,6 +68,12 @@ def getNodePath(dom, nodeid):
 	else:
 		path += "index"  # index file for directory
 	path += ".html"
+
+	# apply new_filename from from tags parameter of node
+	if new_filename != None:
+		path = os.path.dirname(path)
+		path += "/" if path.strip() != "" else ""
+		path += new_filename
 
 	return __utfToFilename(path)
 
