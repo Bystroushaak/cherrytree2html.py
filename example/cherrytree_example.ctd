@@ -1,4 +1,5 @@
-<?xml version="1.0" ?><cherrytree><node name="First node" prog_lang="custom-colors" readonly="False" tags="filename:index.html" unique_id="2"><rich_text>Here should be content of your first page.
+<?xml version="1.0" ?><cherrytree><node name="First node" prog_lang="custom-colors" readonly="False" tags="filename:index.html" unique_id="2"><rich_text scale="h1">Headline</rich_text><rich_text>
+There should be content of your webpages.
 
 Notice that this node will have filename different from nodename when converted to html. That is because there is tag </rich_text><rich_text family="monospace">filename:index.html</rich_text><rich_text> in node search parameters, which can be shown if you press F2 in CherryTree.
 

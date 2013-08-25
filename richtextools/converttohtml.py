@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__version = "1.0.0"
-__date    = "09.08.2013"
+__version = "1.1.0"
+__date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
 # 
@@ -204,6 +204,15 @@ def convertToHtml(dom, node_id):
 	# convert text to paragraphs
 	node = str(node).replace('<rich_text justification="left">', "") # dont ask
 	node = d.parseString(guessParagraphs(node, DONT_WRAP))
+
+	# apply anchors
+	for head in node.find("h1") + node.find("h2") + node.find("h3"):
+		anchor = "anchor_%s_%s" % (head.getTagName(), utfToFilename(head.getContent()))
+
+		head.params["id"] = anchor
+
+		# make head link to itself
+		head.childs = [d.parseString("<a href='#" + anchor + "'>" + head.getContent() + "</a>")]
 
 	# TODO transform • to ul/li tags
 
