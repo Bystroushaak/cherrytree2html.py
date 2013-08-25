@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "1.0.1"
+__version = "1.0.2"
 __date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -175,9 +175,9 @@ if __name__ == '__main__':
 		fh.close()
 	else:
 		try:
-			data = urllib.urlopen(args.location).read()
+			data = urllib.urlopen(args.filename).read()
 		except IOError:
-			writeln("Can't read '" + args.location + "'!", sys.stderr)
+			writeln("Can't read '" + args.filename + "'!", sys.stderr)
 			sys.exit(2)
 
 	# try read template
