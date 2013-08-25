@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "1.0.3"
+__version = "1.0.4"
 __date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -134,22 +134,6 @@ if __name__ == '__main__':
 		default = False,
 		help    = "Print raw node source code (XML)."
 	)
-	parser.add_argument(
-		"-d",
-		"--disable-atom",
-		action  = "store_true",
-		default = False,
-		help    = "Disable support for Atom feeds."
-	)
-	parser.add_argument(
-		"-t",
-		"--template",
-		metavar = "template.html",
-		action  = "store",
-		type    = str,
-		default = None,
-		help    = "Use own template. Keywords: $title, $content, $copyright, $rootpath."
-	)
 	args = parser.parse_args()
 
 	if args.version:
@@ -173,16 +157,6 @@ if __name__ == '__main__':
 			data = urllib.urlopen(args.filename).read()
 		except IOError:
 			writeln("Can't read '" + args.filename + "'!", sys.stderr)
-			sys.exit(2)
-
-	# try read template
-	if args.template != None:
-		try:
-			f = open(args.template)
-			HTML_TEMPLATE = f.read()
-			f.close()
-		except IOError:
-			writeln("Can't read template '" + args.template + "'!", sys.stderr)
 			sys.exit(2)
 
 	# read cherrytree file and parse it to the DOM
@@ -234,8 +208,7 @@ if __name__ == '__main__':
 		if not os.path.exists(OUT_DIR):
 			os.makedirs(OUT_DIR)
 
-		if not args.disable_atom:
-			generateAtomFeed(dom, OUT_DIR)
+		generateAtomFeed(dom, OUT_DIR)
 
 		# check if there is user's own html template - if so, use it
 		html_template = savenode.HTML_TEMPLATE
