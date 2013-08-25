@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "1.0.2"
+__version = "1.0.3"
 __date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
@@ -11,11 +11,6 @@ __email   = "bystrousak@kitakitsune.org"
 # Unported License (http://creativecommons.org/licenses/by/3.0/).
 # Created in Sublime text 2 editor.
 #
-# Notes:
-	# Podporu pro <ul><li>
-	# Obrázky.
-	# TODO: sortování rss podle data
-	# TODO: dotahování jména atom feedu z html templaty, nebo naopak z rss templaty
 #= Imports =====================================================================
 import os
 import sys
