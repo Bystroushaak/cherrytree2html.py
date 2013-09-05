@@ -12,7 +12,7 @@ __email   = "bystrousak@kitakitsune.org"
 #
 #= Imports =====================================================================
 import parser as d
-from savenode        import saveNode
+from savenode        import saveNode, COPYRIGHT
 from converttohtml   import convertToHtml
 
 from usertemplates import saveUserCSS
