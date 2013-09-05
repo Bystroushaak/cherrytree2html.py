@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__version = "1.0.0"
-__date    = "09.08.2013"
-__author  = "Bystroushaak"
-__email   = "bystrousak@kitakitsune.org"
-# 
-# Interpreter version: python 2.7
-# This work is licensed under a Creative Commons 3.0 
-# Unported License (http://creativecommons.org/licenses/by/3.0/).
-# Created in Sublime text 2 editor.
 #
-#= Imports =====================================================================
+# Interpreter version: python 2.7
+# This work is licensed under a Creative Commons 3.0
+# Unported License (http://creativecommons.org/licenses/by/3.0/).
+#
+#= Imports ====================================================================
 import sys
 
 
@@ -18,6 +13,8 @@ import sys
 def write(s, out=sys.stdout):
 	out.write(str(s))
 	out.flush()
+
+
 def writeln(s, out=sys.stdout):
 	write(str(s) + "\n", out)
 
