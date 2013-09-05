@@ -10,11 +10,11 @@ import parser as d
 
 
 
-#= Functions ===================================================================
+#= Functions ==================================================================
 def unlinkFromParent(el):
 	"Unlink element from parent."
 
-	if el.parent != None and el in el.parent.childs:
+	if (el.parent is not None) and (el in el.parent.childs):
 		i = el.parent.childs.index(el)
 		if i >= 0:
 			del el.parent.childs[i]
@@ -23,14 +23,14 @@ def unlinkFromParent(el):
 def replaceInParent(el, new_el):
 	"Replace element in parent.childs."
 
-	if el.parent != None and el in el.parent.childs:
+	if (el.parent is not None) and (el in el.parent.childs):
 		el.parent.childs[el.parent.childs.index(el)] = new_el
 
 
 def elementToP(el):
 	"""
 	Convert one element to <p>el</p>. Element is changed in parent.
-	Returns element (if you don't need it, just drop it, everything is 
+	Returns element (if you don't need it, just drop it, everything is
 	changed in right place in parent already.)
 	"""
 
@@ -39,11 +39,11 @@ def elementToP(el):
 	p.childs.append(el)
 
 	# for double linked lists
-	if el.parent != None:
+	if el.parent is not None:
 		p.parent  = el.parent
 		replaceInParent(el, p)
 		el.parent = p
-	
+
 	p.endtag = d.HTMLElement("</p>")
 
 	return p
@@ -51,7 +51,7 @@ def elementToP(el):
 
 def elementsToP(els):
 	"""
-	Put array of elements into <p>. Result is put into els.parent, so you 
+	Put array of elements into <p>. Result is put into els.parent, so you
 	can just call this and don't care about rest.
 
 	Returns <p>els[:]</p>, just if you needed it.
@@ -92,7 +92,7 @@ def __processBuffer(buff):
 		else:
 			# split by \n\n and convert it to tags
 			tmp = map(
-				lambda x: d.HTMLElement(x.replace("\n", "<br />\n")), # support for <br>
+				lambda x: d.HTMLElement(x.replace("\n", "<br />\n")),  # support for <br>
 				content.split("\n\n")
 			)
 
@@ -112,7 +112,8 @@ def __processBuffer(buff):
 
 			# first element is part of previous <p>
 			p_stack[-1].append(tmp[0])
-			tmp = tmp[1:] if len(tmp) > 1 else [] # del tmp[0] <- this tends to delete object in tmp[0] .. wtf?
+			tmp = tmp[1:] if len(tmp) > 1 else []
+			# ^ del tmp[0] <- this tends to delete object in tmp[0] .. wtf?
 
 			# other elements are new <p>s by itself
 			for i in tmp:
@@ -128,7 +129,8 @@ def guessParagraphs(s, dont_wrap = ["h1", "h2", "h3", "pre", "center", "table"])
 	node = d.parseString(s)
 	d.makeDoubleLinked(node)
 
-	# get all elements between <hx> (headers) - they will be converted to <p>aragraphs
+	# get all elements between <hx> (headers) - they will be converted to
+	# <p>aragraphs
 	tmp = []
 	buffs = []
 	for el in node.childs[0].childs:
@@ -162,6 +164,6 @@ def guessParagraphs(s, dont_wrap = ["h1", "h2", "h3", "pre", "center", "table"])
 
 
 
-#= Main program ================================================================
+#= Main program ===============================================================
 if __name__ == '__main__':
 	pass

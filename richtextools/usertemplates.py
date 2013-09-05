@@ -17,7 +17,7 @@ from converttohtml import convertToHtml
 
 
 
-#= Variables ===================================================================
+#= Variables ==================================================================
 HTML_ENTITIES = {"&lt;":"<", "&gt;":">", "&quot;":"\""}
 SPECIAL_NODENAMES = ["__CSS", "__RSS", "__TEMPLATE"]
 ATOM_ENTRY_TEMPLATE = """
@@ -32,20 +32,20 @@ ATOM_ENTRY_TEMPLATE = """
 
 
 
-#= Functions & objects =========================================================
+#= Functions & objects ========================================================
 def __getFirstNodeByCIName(dom, nodename):
 	"find RSS nodes (case insensitive)"
 	out_node = dom.find(
 		"",
-		fn = lambda x: 
+		fn = lambda x:
 			x.getTagName() == "node" and
-			"name" in x.params and 
+			"name" in x.params and
 			x.params["name"].lower() == nodename
 	)
 
 	if len(out_node) <= 0:
 		return None
-	
+
 	return out_node[0]
 
 
@@ -63,7 +63,9 @@ def __getUserTemplate(dom, name):
 	if template_node is None:
 		return (None, None)
 
-	html_content = d.parseString(convertToHtml(dom, template_node.params["unique_id"]))
+	html_content = d.parseString(
+		convertToHtml(dom, template_node.params["unique_id"])
+	)
 
 	# preprocess content
 	content = html_content.getContent().replace("<p></p>", "").strip()
@@ -84,7 +86,10 @@ def __removeHTMLEntities(s):
 
 
 def getUserCodeboxTemplate(dom, name):
-	"Check if there is node called |name|. If there is, return first codebox from that node."
+	""""
+	Check if there is node called |name|. If there is, return first codebox from
+	that node.
+	"""
 	template_node, template_html = __getUserTemplate(dom, name)
 
 	if template_node is None:
@@ -107,11 +112,12 @@ def getUserCodeboxTemplate(dom, name):
 def saveUserCSS(html_template, css, out_dir):
 	""""
 	Save |css|.
-	Try parse filename from |html_template|, if there is proper <link rel='stylesheet'> tag.
+	Try parse filename from |html_template|, if there is proper
+	<link rel='stylesheet'> tag.
 	Default "style.css".
 	"""
 	dom = d.parseString(html_template)
-	css_name = dom.find("link", {"rel":"stylesheet"})
+	css_name = dom.find("link", {"rel": "stylesheet"})
 
 	if len(css_name) <= 0:
 		css_name = "style.css"
@@ -130,10 +136,10 @@ def saveUserCSS(html_template, css, out_dir):
 def removeSpecialNodenames(dom):
 	special_nodes = dom.find(
 		"",
-		fn = lambda x: 
+		fn = lambda x:
 			x.getTagName() == "node" and
 			"name" in x.params and
-			x.params["name"].startswith("__") and 
+			x.params["name"].startswith("__") and
 			x.params["name"].upper() not in SPECIAL_NODENAMES
 	)
 
@@ -167,7 +173,9 @@ def generateAtomFeed(dom, out_dir):
 		if len(html_node.find("a")) > 0:
 			first_link = html_node.find("a")[0]
 		else:
-			raise ValueError("Item '" + node.params["name"] + "' doesn't have date and/or URL!")
+			raise ValueError(
+				"Item '" + node.params["name"] + "' doesn't have date and/or URL!"
+			)
 
 		updated = first_link.getContent()
 
@@ -176,7 +184,7 @@ def generateAtomFeed(dom, out_dir):
 		url  = "./" + url[5:] if url.startswith("./../") and len(url) > 5 else url
 
 		# remove first link (and it's content) from html code
-		if first_link != None:
+		if first_link is not None:
 			first_link.replaceWith(d.HTMLElement(""))
 
 		# preprocess content
@@ -230,7 +238,10 @@ def generateAtomFeed(dom, out_dir):
 
 	if "." not in filename:
 		filename = "atom.xml"
-		writeln("There isn't specified filename of your feed, so I chosed default 'atom.xml'.")
+		writeln(
+			"There isn't specified filename of your feed, so I choosed default " +
+			"'%s'" % (filename)
+		)
 
 
 	fh = open(out_dir + "/" + filename, "wt")
@@ -243,6 +254,6 @@ def generateAtomFeed(dom, out_dir):
 
 
 
-#= Main program ================================================================
+#= Main program ===============================================================
 if __name__ == '__main__':
 	pass

@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __name    = ".ctd to .html"
-__version = "1.1.0"
-__date    = "25.08.2013"
 __author  = "Bystroushaak"
 __email   = "bystrousak@kitakitsune.org"
-# 
+#
 # Interpreter version: python 2.7
-# This work is licensed under a Creative Commons 3.0 
+# This work is licensed under a Creative Commons 3.0
 # Unported License (http://creativecommons.org/licenses/by/3.0/).
 # Created in Sublime text 2 editor.
 #
-#= Imports =====================================================================
+#= Imports ====================================================================
 import os
 import sys
 import urllib
@@ -26,22 +24,16 @@ from richtextools import *
 
 
 
-#= Variables ===================================================================
+#= Variables ==================================================================
 OUT_DIR = "output"
 
 
 
-#= Functions & objects =========================================================
-# well, this will work everywhere and exactly how i want, not like print / print()
-def write(s, out=sys.stdout):
-	out.write(str(s))
-	out.flush()
-def writeln(s, out=sys.stdout):
-	write(str(s) + "\n", out)
-
-
+#= Functions & objects ========================================================
 def printVersion():
-	writeln(__name + " v" + __version + " (" + __date + ") by " + __author + " (" + __email + ")")
+	writeln(
+		"%s v%s (%s) by %s (%s)" % (__name, __version, __date, __author, __email)
+	)
 
 
 def listNodes(dom):
@@ -50,7 +42,8 @@ def listNodes(dom):
 	ids   = []
 	nodes = ""
 	for node in dom.find("node"):
-		nodes += node.params["unique_id"].ljust(4) + "- " + node.params["name"] + "\n"
+		nodes += node.params["unique_id"].ljust(4) + "- " + node.params["name"]
+		nodes += "\n"
 		ids.append(int(node.params["unique_id"]))
 
 	return ids, nodes
@@ -60,7 +53,7 @@ def rawXml(dom, node_id):
 	"Just return node XML source."
 
 	# get node element
-	node = dom.find("node", {"unique_id" : str(node_id)})[0]
+	node = dom.find("node", {"unique_id": str(node_id)})[0]
 
 	# remove subnodes
 	for n in node.find("node"):
@@ -71,7 +64,7 @@ def rawXml(dom, node_id):
 
 
 
-#= Main program ================================================================
+#= Main program ===============================================================
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument(
@@ -179,7 +172,7 @@ if __name__ == '__main__':
 
 		# read userdata.
 		selected = False
-		while selected != True:
+		while selected is not True:
 			write(":> ", sys.stderr)
 			nodeid = raw_input("")
 
@@ -208,7 +201,8 @@ if __name__ == '__main__':
 		if not os.path.exists(OUT_DIR):
 			os.makedirs(OUT_DIR)
 
-		# remove nodes which names starts with __ (with exception of usertemplates.SPECIAL_NODENAMES)
+		# remove nodes which names starts with __ (with exception of
+		# usertemplates.SPECIAL_NODENAMES)
 		removeSpecialNodenames(dom)
 
 		generateAtomFeed(dom, OUT_DIR)
@@ -216,7 +210,7 @@ if __name__ == '__main__':
 		# check if there is user's own html template - if so, use it
 		html_template = savenode.HTML_TEMPLATE
 		template = getUserCodeboxTemplate(dom, "__template")
-		if template != None:
+		if template is not None:
 			html_template = template
 
 
@@ -229,7 +223,7 @@ if __name__ == '__main__':
 		# convert all nodes to html
 		for n in dom.find("node"):
 			nodename = saveNode(
-				dom, 
+				dom,
 				nodeid        = n.params["unique_id"].strip(),
 				html_template = html_template,
 				out_dir       = OUT_DIR,
@@ -245,7 +239,10 @@ if __name__ == '__main__':
 		ids = listNodes(dom)[0]
 
 		if args.node not in ids:
-			writeln("Selected ID '" + str(args.node) + "' doesn't exists!", sys.stderr)
+			writeln(
+				"Selected ID '" + str(args.node) + "' doesn't exists!",
+				sys.stderr
+			)
 			sys.exit(3)
 
 		if args.save:

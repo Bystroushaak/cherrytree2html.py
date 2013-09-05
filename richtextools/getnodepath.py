@@ -15,7 +15,7 @@ import parser as d
 
 
 
-#= Functions & objects =========================================================
+#= Functions & objects ========================================================
 def utfToFilename(nodename):
 	"Convert UTF nodename to ASCII."
 
@@ -38,7 +38,7 @@ def getNodePath(dom, nodeid):
 		d.makeDoubleLinked(dom)
 
 	# get reference to node
-	node = dom.find("node", {"unique_id" : str(nodeid)})[0]
+	node = dom.find("node", {"unique_id": str(nodeid)})[0]
 
 	# check for filename in tags
 	new_filename = None
@@ -54,18 +54,18 @@ def getNodePath(dom, nodeid):
 
 	# get path (based on node path in dom)
 	path = ""
-	while node.parent != None and node.getTagName().lower() == "node":
+	while node.parent is not None and node.getTagName().lower() == "node":
 		path = node.params["name"] + "/" + path
 		node = node.parent
 
 	if endpoint:
-		path = path[:-1] # remove '/' from end of the path
+		path = path[:-1]  # remove '/' from end of the path
 	else:
-		path += "index"  # index file for directory
+		path += "index"   # index file for directory
 	path += ".html"
 
 	# apply new_filename from from tags parameter of node
-	if new_filename != None:
+	if new_filename is not None:
 		path = os.path.dirname(path)
 		path += "/" if path.strip() != "" else ""
 		path += new_filename
@@ -74,6 +74,6 @@ def getNodePath(dom, nodeid):
 
 
 
-#= Main program ================================================================
+#= Main program ===============================================================
 if __name__ == '__main__':
 	pass

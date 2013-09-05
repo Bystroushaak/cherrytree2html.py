@@ -15,12 +15,12 @@ from converttohtml import convertToHtml
 
 
 
-#= Variables ===================================================================
+#= Variables ==================================================================
 HTML_TEMPLATE = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <head>
 	<title>$title</title>
-	
+
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 	<link rel="stylesheet" type="text/css"             href="$rootpath/style.css" />
@@ -36,7 +36,7 @@ $copyright
 </body>
 </HTML>"""
 COPYRIGHT = """
-<!-- 
+<!--
 	Written in CherryTree, converted to HTML by cherrytree2html.py
 
 	- http://www.giuspen.com/cherrytree/
@@ -46,7 +46,7 @@ COPYRIGHT = """
 
 
 
-#= Functions & objects =========================================================
+#= Functions & objects ========================================================
 def saveNode(dom, nodeid, html_template, out_dir, name = None):
 	"Convert node to the HTML and save it to the HTML."
 
@@ -58,8 +58,8 @@ def saveNode(dom, nodeid, html_template, out_dir, name = None):
 	rootpath = "." if rootpath == "" else rootpath
 
 	# ugly, bud increase parsing speed a bit
-	if name == None:
-		name = dom.find("node", {"unique_id" : nodeid})[0]
+	if name is None:
+		name = dom.find("node", {"unique_id": nodeid})[0]
 		name = name.params["name"]
 
 	# generate filename, convert html
@@ -86,6 +86,6 @@ def saveNode(dom, nodeid, html_template, out_dir, name = None):
 
 
 
-#= Main program ================================================================
+#= Main program ===============================================================
 if __name__ == '__main__':
 	pass

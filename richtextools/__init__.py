@@ -18,6 +18,6 @@ from usertemplates import removeSpecialNodenames
 
 
 
-#= Main program ================================================================
+#= Main program ===============================================================
 if __name__ == '__main__':
 	pass
