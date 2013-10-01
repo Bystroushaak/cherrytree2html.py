@@ -117,7 +117,7 @@ def __transformRichText(tag):
 
 
 
-def convertToHtml(dom, node_id):
+def convertToHtml(dom, node_id, do_anchors = True):
 	# get node element
 	node = dom.find("node", {"unique_id": str(node_id)})[0]
 	node = d.parseString(str(node)).find("node")[0]  # easiest way to do deep copy
@@ -203,23 +203,18 @@ def convertToHtml(dom, node_id):
 	node = str(node).replace('<rich_text justification="left">', "")  # dont ask
 	node = d.parseString(guessParagraphs(node, DONT_WRAP))
 
-	# apply anchors
-	for head in node.find("h1") + node.find("h2") + node.find("h3"):
-		anchor = "anchor_%s_%s" % (head.getTagName(), utfToFilename(head.getContent()))
+	if do_anchors:
+		# apply anchors
+		for head in node.find("h1") + node.find("h2") + node.find("h3"):
+			anchor = "anchor_%s_%s" % (head.getTagName(), utfToFilename(head.getContent()))
 
-		head.params["id"] = anchor
+			head.params["id"] = anchor
 
-		# make head link to itself
-		head.childs = [
-			d.parseString("<a href='#" + anchor + "'>" + head.getContent() + "</a>")
-		]
+			# make head link to itself
+			head.childs = [
+				d.parseString("<a href='#" + anchor + "'>" + head.getContent() + "</a>")
+			]
 
 	# TODO transform • to ul/li tags
 
 	return str(node.find("node")[0].getContent())
-
-
-
-#= Main program ================================================================
-if __name__ == '__main__':
-	pass

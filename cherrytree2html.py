@@ -127,6 +127,12 @@ if __name__ == '__main__':
 		default = False,
 		help    = "Print raw node source code (XML)."
 	)
+	parser.add_argument(
+		"--do-anchors",
+		action  = "store_true",
+		default = False,
+		help    = "Put <h> anchors to the code."
+	)
 	args = parser.parse_args()
 
 	if args.version:
@@ -191,7 +197,13 @@ if __name__ == '__main__':
 				continue
 
 		if args.save:
-			nodename = saveNode(dom, nodeid, savenode.HTML_TEMPLATE, OUT_DIR)
+			nodename = saveNode(
+				dom,
+				nodeid,
+				savenode.HTML_TEMPLATE,
+				OUT_DIR,
+				do_anchors = args.do_anchors
+			)
 
 			writeln("\nSaved to '" + nodename + "'")
 		else:
@@ -227,7 +239,8 @@ if __name__ == '__main__':
 				nodeid        = n.params["unique_id"].strip(),
 				html_template = html_template,
 				out_dir       = OUT_DIR,
-				name          = n.params["name"]
+				name          = n.params["name"],
+				do_anchors    = args.do_anchors
 			)
 
 			writeln("Node '" + nodename + "' saved.")
@@ -250,10 +263,14 @@ if __name__ == '__main__':
 				dom,
 				nodeid        = args.node,
 				html_template = savenode.HTML_TEMPLATE,
-				out_dir       = OUT_DIR
+				out_dir       = OUT_DIR,
+				do_anchors    = args.do_anchors
 			)
 
 			writeln("Saved to '" + nodename + "'")
 		else:
-			writeln(convertToHtml(dom, args.node))
+			writeln(convertToHtml(
+				dom, args.node,
+				do_anchors = args.do_anchors
+			))
 			writeln(COPYRIGHT)

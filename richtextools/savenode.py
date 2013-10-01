@@ -47,7 +47,7 @@ COPYRIGHT = """
 
 
 #= Functions & objects ========================================================
-def saveNode(dom, nodeid, html_template, out_dir, name = None):
+def saveNode(dom, nodeid, html_template, out_dir, name = None, do_anchors = True):
 	"Convert node to the HTML and save it to the HTML."
 
 	nodeid   = str(nodeid)
@@ -63,7 +63,7 @@ def saveNode(dom, nodeid, html_template, out_dir, name = None):
 		name = name.params["name"]
 
 	# generate filename, convert html
-	data = convertToHtml(dom, nodeid)
+	data = convertToHtml(dom, nodeid, do_anchors = do_anchors)
 
 	# apply html template
 	data = Template(html_template).substitute(
