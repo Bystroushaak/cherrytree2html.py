@@ -7,6 +7,8 @@
 #
 #= Imports ====================================================================
 import sys
+import base64
+import hashlib
 
 
 import parser as d
@@ -117,7 +119,7 @@ def __transformRichText(tag):
 
 
 
-def convertToHtml(dom, node_id, do_anchors = True):
+def convertToHtml(dom, node_id, do_anchors = True, root_path = None):
 	# get node element
 	node = dom.find("node", {"unique_id": str(node_id)})[0]
 	node = d.parseString(str(node)).find("node")[0]  # easiest way to do deep copy
@@ -148,23 +150,44 @@ def convertToHtml(dom, node_id, do_anchors = True):
 
 		return d.parseString(html_table)
 
-	# create html versions of replacements_tagnames| tags and put them into
+	def processPicture(picture, root_path):
+		content = base64.b64decode(picture.getContent())
+
+		filename = hashlib.md5(content).hexdigest() + ".png"
+
+		directory = root_path + "/pictures"
+		if not os.path.exists(directory):
+			os.makedirs(directory)
+
+		with open(directory + "/" + filename, "wb") as f:
+			f.write(content)
+
+		img = d.HTMLElement("<img />")
+		img.params["src"] = directory + "/" + filename
+
+		return img
+
+
+	# create html versions of |replacements_tagnames| tags and put them into
 	# |replacements[]| variable
 	# remove |replacements_tagnames| from DOM
 	replacements = []
-	replacements_tagnames = ["codebox", "table"]
+	replacements_tagnames = ["codebox", "table", "encoded_png"]
 	for replacement in node.find("", fn = lambda x: x.getTagName() in replacements_tagnames):
 		el = None
 
-		if replacement.getTagName() == "codebox":
+		tag_name = replacement.getTagName()
+		if tag_name == "codebox":
 			el = d.HTMLElement("<pre>")
 			el.childs = replacement.childs[:]
 			el.params["syntax"] = replacement.params["syntax_highlighting"]
 			el.endtag = d.HTMLElement("</pre>")
-		elif replacement.getTagName() == "table":
+		elif tag_name == "table":
 			el = processTable(replacement)
+		elif tag_name == "encoded_png":
+			el = processPicture(replacement, root_path)
 		else:
-			raise ValueError("This shouldn't happend. If does, HTML parser is broken.")
+			raise ValueError("This shouldn't happend. If does, there is new unknown <element>.")
 
 		replacements.append(el)
 
@@ -173,10 +196,9 @@ def convertToHtml(dom, node_id, do_anchors = True):
 
 	# replace <rich_text justification="left"></rich_text> with tags from
 	# |replacements|
-	cnt = 0
-	for j in node.find("rich_text", {"justification": "left"}):
-		j.replaceWith(replacements[cnt])
-		cnt += 1
+	if len(replacements) > 0:
+		for cnt, rt in enumerate(node.find("rich_text", {"justification": "left"})):
+			rt.replaceWith(replacements[cnt])
 	#===========================================================================
 
 

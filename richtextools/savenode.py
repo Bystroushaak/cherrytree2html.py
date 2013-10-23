@@ -53,9 +53,9 @@ def saveNode(dom, nodeid, html_template, out_dir, name = None, do_anchors = True
 	nodeid   = str(nodeid)
 	filename = getNodePath(dom, nodeid)
 
-	rootpath = filename.count("/") * "../"
-	rootpath = rootpath[:-1] if rootpath.endswith("/") else rootpath
-	rootpath = "." if rootpath == "" else rootpath
+	root_path = filename.count("/") * "../"
+	root_path = root_path[:-1] if root_path.endswith("/") else root_path
+	root_path = "." if root_path == "" else root_path
 
 	# ugly, bud increase parsing speed a bit
 	if name is None:
@@ -63,14 +63,19 @@ def saveNode(dom, nodeid, html_template, out_dir, name = None, do_anchors = True
 		name = name.params["name"]
 
 	# generate filename, convert html
-	data = convertToHtml(dom, nodeid, do_anchors = do_anchors)
+	data = convertToHtml(
+		dom,
+		nodeid,
+		do_anchors = do_anchors,
+		root_path  = root_path
+	)
 
 	# apply html template
 	data = Template(html_template).substitute(
 		content   = data,
 		title     = name,
 		copyright = COPYRIGHT,
-		rootpath  = rootpath
+		rootpath  = root_path
 	)
 
 	# check if directory tree exists - if not, create it
