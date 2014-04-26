@@ -7,8 +7,10 @@
 #
 #= Imports ====================================================================
 import sys
+import shutil
 import base64
 import hashlib
+import os.path
 
 
 import parser as d
@@ -30,7 +32,7 @@ DONT_WRAP = [
 
 
 #= Functions & objects ========================================================
-def __transformLink(tag, dom, node_id):
+def __transformLink(tag, dom, node_id, out_dir, root_path):
     """
     Transform <rich_text link="webs http://kitakitsune.org">odkaz</rich_text>
     to <a href="http://kitakitsune.org">odkaz</a>.
@@ -57,13 +59,33 @@ def __transformLink(tag, dom, node_id):
             # relative path to local files in current directory
             if link.startswith("http://./"):
                 link = link[7:]
+        elif tag.params["link"].startswith("file "):
+            link = base64.b64decode(tag.params["link"].split()[1])
+
+            # support for local images - I did tried to make it work as node,
+            # but that failed miserably, because there is limit to picture
+            # dimensions and other shitty crap
+            file_type = link.split(".")
+            pic_types = ["png", "gif", "jpg", "jpeg"]
+            if len(file_type) >= 1 and file_type[-1].lower() in pic_types:
+                directory = out_dir + "/pictures"
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+
+                local_name = "%s/%s_%s" % (
+                    directory,
+                    hashlib.md5(link).hexdigest(),
+                    os.path.basename(link)
+                )
+
+                shutil.copyfile(link, local_name)
         elif tag.params["link"].startswith("node "):
             # internal links contains only node id
             link_id = link.strip()
 
             # get nodename
             linked_nodename = dom.find("node", {"unique_id": str(link_id)})
-            if len(linked_nodename) == 0:
+            if not linked_nodename:
                 writeln("Broken link to node ID '" + link_id + "'", sys.stderr)
                 link = "[broken link to internal node]"
             else:
@@ -222,7 +244,7 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
         __transformRichText(t)
 
         # transform links
-        __transformLink(t, dom, node_id)
+        __transformLink(t, dom, node_id, out_dir, root_path)
 
         # there are _arrays_ of rich_text with no params - this is not same as
         # <p>, because <p> allows nested parameters -> <p>Xex <b>bold</b></p>,
