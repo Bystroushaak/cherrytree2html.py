@@ -18,7 +18,7 @@ import parser as d
 def utfToFilename(nodename):
     "Convert UTF nodename to ASCII."
 
-    intab = """ ?,@#$%^&*{}[]'"><°~\\|    """
+    intab = """ ?,@#$%^&*{}[]'"><°~\\|\t"""
     outtab = """_!!!!!!!!!!!!!!!!!!!!!!!"""
     trantab = maketrans(intab, outtab)
 
