@@ -81,12 +81,12 @@ def __transformRichText(tag):
     "Transform tag ala <rich_text some='crap'> to real html tags."
 
     # skip richtext nodes with no parameters (they are removed later)
-    if len(tag.params) == 0:
+    if not tag.params:
         return
 
     # tags which contains nothing printable are converted just to its content
     # (whitespaces) "<h3> </h3>" -> " "
-    if tag.getContent().strip() == "":
+    if not tag.getContent().strip():
         tag.params = {}
         return
 
@@ -178,7 +178,7 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
     replacements = []
     replacements_tagnames = ["codebox", "table", "encoded_png"]
     for replacement in node.find("", fn=lambda x:
-                                 x.getTagName() in replacements_tagnames):
+                                     x.getTagName() in replacements_tagnames):
         el = None
 
         tag_name = replacement.getTagName()
@@ -206,7 +206,14 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
     # |replacements|
     # if len(replacements) > 0:
     for cnt, rt in enumerate(node.find("rich_text", {"justification": "left"})):
-        rt.replaceWith(replacements[cnt])
+        if "link" in rt.params:  # support for pictures as links
+            el = d.HTMLElement("<rich_text>")
+            el.params["link"] = rt.params["link"]
+            el.childs = [replacements[cnt]]
+            el.endtag = d.HTMLElement("</rich_text>")
+            rt.replaceWith(el)
+        else:
+            rt.replaceWith(replacements[cnt])
     #===========================================================================
 
     # transform all <rich_text> tags to something usefull
