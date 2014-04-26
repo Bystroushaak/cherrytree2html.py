@@ -15,9 +15,3 @@ from usertemplates import saveUserCSS
 from usertemplates import generateAtomFeed
 from usertemplates import getUserCodeboxTemplate
 from usertemplates import removeSpecialNodenames
-
-
-
-#= Main program ===============================================================
-if __name__ == '__main__':
-	pass

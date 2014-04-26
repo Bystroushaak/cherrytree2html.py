@@ -152,17 +152,23 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
     def processPicture(picture, out_dir, root_path):
         content = base64.b64decode(picture.getContent())
 
-        filename = hashlib.md5(content).hexdigest() + ".png"
+        if out_dir is not None:
+            filename = hashlib.md5(content).hexdigest() + ".png"
 
-        directory = out_dir + "/pictures"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+            directory = out_dir + "/pictures"
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
-        with open(directory + "/" + filename, "wb") as f:
-            f.write(content)
+            with open(directory + "/" + filename, "wb") as f:
+                f.write(content)
 
         img = d.HTMLElement("<img />")
-        img.params["src"] = root_path + "/pictures/" + filename
+
+        if out_dir is not None:
+            img.params["src"] = root_path + "/pictures/" + filename
+        else:
+            content = "".join(picture.getContent().split())
+            img.params["src"] = "data:image/png;base64," + picture.getContent()
 
         return img
 

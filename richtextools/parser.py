@@ -11,23 +11,17 @@ import sys
 
 # this will work everywhere and exactly how i want, not like print / print()
 def write(s, out=sys.stdout):
-	out.write(str(s))
-	out.flush()
+    out.write(str(s))
+    out.flush()
 
 
 def writeln(s, out=sys.stdout):
-	write(str(s) + "\n", out)
+    write(str(s) + "\n", out)
 
 
 try:
-	from dhtmlparser import *
+    from dhtmlparser import *
 except ImportError:
-	writeln("\nThis script require dhtmlparser.", sys.stderr)
-	writeln("> https://github.com/Bystroushaak/pyDHTMLParser <\n", sys.stderr)
-	sys.exit(1)
-
-
-
-#= Main program ===============================================================
-if __name__ == '__main__':
-	pass
+    writeln("\nThis script require dhtmlparser.", sys.stderr)
+    writeln("> https://github.com/Bystroushaak/pyDHTMLParser <\n", sys.stderr)
+    sys.exit(1)
