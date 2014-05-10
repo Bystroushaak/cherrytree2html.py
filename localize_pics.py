@@ -35,6 +35,15 @@ ALLOWED_IMAGES = [
 def localize_image(path, out_dir):
     new_path = out_dir + "/" + os.path.basename(path)
 
+    if path.startswith("http://") or path.startswith("https://"):
+        local_name = "/tmp/pic_" + os.path.basename(path).replace("/", "")
+        with open(local_name, "wb") as f:
+            f.write(Downloader().download(path))
+        path = local_name
+
+    if not os.path.exists(path):
+        return path
+
     if os.path.exists(new_path):
         path_md5 = md5(open(path).read()).hexdigest()
         new_path_md5 = md5(open(new_path).read()).hexdigest()
@@ -75,7 +84,7 @@ if __name__ == '__main__':
     if out_dir:
         out_dir = out_dir[0].getContent().strip().replace("/", "")
     else:
-        out_dir = os.path.basename(sys.argv[1])
+        out_dir = os.path.basename(sys.argv[1]).rsplit(".", 1)[0]
 
     # create output directory
     if not os.path.exists(out_dir):
