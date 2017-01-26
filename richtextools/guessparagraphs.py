@@ -163,4 +163,5 @@ def guessParagraphs(s, dont_wrap=["h1", "h2", "h3", "pre", "center", "table"]):
                     .replace("<h", "\n<h")         \
                     .replace("\t", "")             \
                     .replace("<p><br />\n", "<p>") \
-                    .replace("<p></p>\n", "")
+                    .replace("<p></p>\n", "")      \
+                    .replace("•", "<li>")
