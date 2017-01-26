@@ -80,7 +80,7 @@ def __processBuffer(buff):
         # content without \n\n is just regular part of <p>
         if not "\n\n" in content:
             if "\n" in content:
-                nel = d.parseString(str(el).replace("\n", "<br />\n"))
+                nel = d.parseString(str(el))#.replace("\n", "<br />\n"))
                 nel.parent = el.parent
                 el.replaceWith(nel)
             p_stack[-1].append(el)
@@ -92,7 +92,8 @@ def __processBuffer(buff):
             # split by \n\n and convert it to tags
             tmp = map(
                 # support for <br>
-                lambda x: d.HTMLElement(x.replace("\n", "<br />\n")),
+                lambda x: d.HTMLElement(x),
+                # lambda x: d.HTMLElement(x.replace("\n", "<br />\n")),
                 content.split("\n\n")
             )
 
@@ -160,4 +161,6 @@ def guessParagraphs(s, dont_wrap=["h1", "h2", "h3", "pre", "center", "table"]):
                     .replace("</p>", "</p>\n\n")   \
                     .replace("<p>\n", "<p>")       \
                     .replace("<h", "\n<h")         \
-                    .replace("<p><br />\n", "<p>")  # don't ask..
+                    .replace("\t", "")             \
+                    .replace("<p><br />\n", "<p>") \
+                    .replace("<p></p>\n", "")

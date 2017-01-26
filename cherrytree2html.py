@@ -11,6 +11,7 @@ __email   = "bystrousak@kitakitsune.org"
 #
 #= Imports ====================================================================
 import os
+import re
 import sys
 import urllib
 
@@ -158,8 +159,12 @@ if __name__ == '__main__':
         writeln("Can't read '" + args.filename + "'!", sys.stderr)
         sys.exit(2)
 
+    def replace_strange_formatting(data):
+        return re.sub("\n\t+<rich_text", "<rich_text", data)
+        # return data.replace("\n\t\t<rich_text", "<rich_text")
+
     # read cherrytree file and parse it to the DOM
-    dom = d.parseString(data)
+    dom = d.parseString(replace_strange_formatting(data))
 
     # raw - patch convertToHtml
     if args.raw:
