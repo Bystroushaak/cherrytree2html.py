@@ -60,6 +60,15 @@ def rawXml(dom, node_id, do_anchors=None):
     return str(node)
 
 
+def _read_resource(path):
+    """Try open and read data from given location."""
+    if os.path.exists(path):
+        with open(args.filename) as f:
+            return f.read()
+
+    return urllib.urlopen(path).read()
+
+
 #= Main program ===============================================================
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -143,16 +152,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # try open and read data from given location
-    if os.path.exists(args.filename):
-        fh = open(args.filename)
-        data = fh.read()
-        fh.close()
-    else:
-        try:
-            data = urllib.urlopen(args.filename).read()
-        except IOError:
-            writeln("Can't read '" + args.filename + "'!", sys.stderr)
-            sys.exit(2)
+    try:
+        data = _read_resource(args.filename)
+    except IOError:
+        writeln("Can't read '" + args.filename + "'!", sys.stderr)
+        sys.exit(2)
 
     # read cherrytree file and parse it to the DOM
     dom = d.parseString(data)
@@ -165,6 +169,7 @@ if __name__ == '__main__':
     if args.list:
         writeln(listNodes(dom)[1])
         sys.exit(0)
+
     # interactive mode
     elif args.interactive:
         ids, nodes = listNodes(dom)
