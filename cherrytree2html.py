@@ -233,7 +233,7 @@ if __name__ == '__main__':
 
         # check for user's css style
         css = getUserCodeboxTemplate(dom, "__css")
-        if not css is None:
+        if css is not None:
             saveUserCSS(html_template, css, OUT_DIR)
 
         # convert all nodes to html

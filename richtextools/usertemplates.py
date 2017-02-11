@@ -35,14 +35,14 @@ ATOM_ENTRY_TEMPLATE = """
 
 
 #= Functions & objects ========================================================
-def __getFirstNodeByCIName(dom, nodename):
+def _getFirstNodeByCIName(dom, nodename):
     "find RSS nodes (case insensitive)"
     out_node = dom.find(
         "",
         fn=lambda x:
             x.getTagName() == "node" and
             "name" in x.params and
-            x.params["name"].lower() == nodename
+            x.params["name"].lower() == nodename.lower()
     )
 
     if len(out_node) <= 0:
@@ -51,7 +51,7 @@ def __getFirstNodeByCIName(dom, nodename):
     return out_node[0]
 
 
-def __getUserTemplate(dom, name):
+def _getUserTemplate(dom, name):
     """"
     Return users template identified by name (case insensitive).
 
@@ -59,7 +59,7 @@ def __getUserTemplate(dom, name):
 
     Returns: (template_node, html_content)
     """
-    template_node = __getFirstNodeByCIName(dom, name)
+    template_node = _getFirstNodeByCIName(dom, name)
 
     # don't continue, if there is no rss node
     if template_node is None:
@@ -78,7 +78,7 @@ def __getUserTemplate(dom, name):
 
 
 # lame, i know..
-def __removeHTMLEntities(s):
+def _removeHTMLEntities(s):
     for key, val in HTML_ENTITIES.iteritems():
         s = s.replace(key, val)
 
@@ -90,17 +90,18 @@ def getUserCodeboxTemplate(dom, name):
     Check if there is node called |name|. If there is, return first codebox from
     that node.
     """
-    template_node, template_html = __getUserTemplate(dom, name)
+    template_node, template_html = _getUserTemplate(dom, name)
 
     if template_node is None:
         return None
     template = template_node.find("codebox")
 
-    if len(template) <= 0:
-        return None
-    template = template[0].getContent()
+    if template:
+        template = template[0].getContent()
+    else:
+        template = template_node.find("rich_text")[0].getContent()
 
-    template = __removeHTMLEntities(template)
+    template = _removeHTMLEntities(template)
 
     # remove whole node from document
     template_node.replaceWith(d.HTMLElement(""))
@@ -118,18 +119,16 @@ def saveUserCSS(html_template, css, out_dir):
     dom = d.parseString(html_template)
     css_name = dom.find("link", {"rel": "stylesheet"})
 
-    if len(css_name) <= 0:
+    if not css_name:
         css_name = "style.css"
     else:
         css_name = css_name[0]
-        css_name = css_name.params["href"] if "href" in css_name.params\
-                                           else "style.css"
+        css_name = css_name.params.get("href", "style.css")
 
     css_name = os.path.basename(css_name)
 
-    fh = open(out_dir + "/" + css_name, "wt")
-    fh.write(css)
-    fh.close()
+    with open(out_dir + "/" + css_name, "wt") as fh:
+        fh.write(css)
 
 
 def removeSpecialNodenames(dom):
@@ -147,9 +146,9 @@ def removeSpecialNodenames(dom):
         special_node.replaceWith(d.HTMLElement(""))
 
 
-# TODO: this needs to be refactored
+# TODO: this needs refactoring
 def generateAtomFeed(dom, out_dir):
-    rss_node = __getFirstNodeByCIName(dom, "__rss")
+    rss_node = _getFirstNodeByCIName(dom, "__rss")
 
     # don't continue, if there is no rss node
     if rss_node is None:
@@ -192,7 +191,6 @@ def generateAtomFeed(dom, out_dir):
         for key, val in HTML_ENTITIES.iteritems():
             content = content.replace(val, key)
 
-
         entries += Template(ATOM_ENTRY_TEMPLATE).substitute(
             title=node.params["name"],
             url=url,
@@ -216,7 +214,7 @@ def generateAtomFeed(dom, out_dir):
         raise ValueError("There is no codebox with Atom template!")
     atom_template = atom_template[0].getContent()
 
-    atom_template = __removeHTMLEntities(atom_template)
+    atom_template = _removeHTMLEntities(atom_template)
 
     atom_feed = Template(atom_template).substitute(
         updated=update_times[0],
