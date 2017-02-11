@@ -6,6 +6,8 @@
 # Unported License (http://creativecommons.org/licenses/by/3.0/).
 #
 #= Imports ====================================================================
+import re
+
 import parser as d
 
 
@@ -155,13 +157,29 @@ def guessParagraphs(s, dont_wrap=["h1", "h2", "h3", "pre", "center", "table"]):
         )
     )
 
-    # return "beautified" string
-    return str(node)                               \
-                    .replace("<p>", "\n<p>")       \
-                    .replace("</p>", "</p>\n\n")   \
-                    .replace("<p>\n", "<p>")       \
-                    .replace("<h", "\n<h")         \
-                    .replace("\t", "")             \
-                    .replace("<p><br />\n", "<p>") \
-                    .replace("<p></p>\n", "")      \
-                    .replace("•", "<li>")
+    replacements = [
+        ("<p>",         "\n<p>"),
+        ("</p>",        "</p>\n\n"),
+        ("<p>\n",       "<p>"),
+        ("<h",          "\n<h"),
+        ("\t",          ""),
+        ("<p><br />\n", "<p>"),
+        ("<p></p>\n",   ""),
+    ]
+
+    regular_replacements = [
+        (r"• (.*)</p>\n", r"<li>\1</li>\n</p>\n"),
+        (r"• (.*)\n", r"<li>\1</li>\n"),
+    ]
+
+    str_node = str(node)
+
+    for replacement in replacements:
+        str_node = str_node.replace(replacement[0], replacement[1])
+
+    for replacement in regular_replacements:
+        str_node = re.sub(replacement[0], replacement[1], str_node)
+
+
+
+    return str_node
