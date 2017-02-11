@@ -180,6 +180,4 @@ def guessParagraphs(s, dont_wrap=["h1", "h2", "h3", "pre", "center", "table"]):
     for replacement in regular_replacements:
         str_node = re.sub(replacement[0], replacement[1], str_node)
 
-
-
     return str_node
