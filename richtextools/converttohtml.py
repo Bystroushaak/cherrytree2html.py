@@ -14,8 +14,8 @@ import os.path
 
 
 import parser as d
-from parser          import writeln
-from getnodepath     import *
+from parser import writeln
+from getnodepath import *
 from guessparagraphs import *
 
 
@@ -32,7 +32,7 @@ DONT_WRAP = [
 
 
 #= Functions & objects ========================================================
-def __transformLink(tag, dom, node_id, out_dir, root_path):
+def _transformLink(tag, dom, node_id, out_dir, root_path):
     """
     Transform <rich_text link="webs http://kitakitsune.org">odkaz</rich_text>
     to <a href="http://kitakitsune.org">odkaz</a>.
@@ -99,7 +99,7 @@ def __transformLink(tag, dom, node_id, out_dir, root_path):
         tag.replaceWith(el)
 
 
-def __transformRichText(tag):
+def _transformRichText(tag):
     "Transform tag ala <rich_text some='crap'> to real html tags."
 
     # skip richtext nodes with no parameters (they are removed later)
@@ -125,19 +125,107 @@ def __transformRichText(tag):
         {"attr_key": "scale",         "attr_val": "sub",       "tag": "sub"},
         {"attr_key": "scale",         "attr_val": "small",     "tag": "small"},
         {"attr_key": "justification", "attr_val": "center",    "tag": "center"},
+        {"attr_key": "justification", "attr_val": "left",      "tag": None},
     ]
+
+    def has_same_value(tag, trans):
+        return tag.params[trans["attr_key"]] == trans["attr_val"]
 
     # transform tags
     for trans in rich_text_table:
-        if trans["attr_key"] in tag.params and \
-           tag.params[trans["attr_key"]] == trans["attr_val"]:
+        if trans["attr_key"] in tag.params and has_same_value(tag, trans):
             del tag.params[trans["attr_key"]]
 
-            # put HTML tag INTO rich_text
-            el = d.HTMLElement("<" + trans["tag"] + ">")
-            el.childs = tag.childs
-            tag.childs = [el]
-            el.endtag = d.HTMLElement("</" + trans["tag"] + ">")
+            if trans["tag"]:
+                # put HTML tag INTO rich_text
+                el = d.HTMLElement("<" + trans["tag"] + ">")
+                el.params = trans.get("params", {})
+                el.childs = tag.childs
+                tag.childs = [el]
+                el.endtag = d.HTMLElement("</" + trans["tag"] + ">")
+
+
+def _processTable(table):
+    "Convert cherrytree table to HTML table."
+
+    del table.params["char_offset"]
+
+    html_table = str(table)
+
+    html_table = html_table.replace("<cell>", "<td>")
+    html_table = html_table.replace("</cell>", "</td>")
+    html_table = html_table.replace("<row>", "<tr>")
+    html_table = html_table.replace("</row>", "</tr>\n")
+
+    return d.parseString(html_table)
+
+
+def _processPicture(picture, out_dir, root_path):
+    content = base64.b64decode(picture.getContent())
+
+    if out_dir is not None:
+        filename = hashlib.md5(content).hexdigest() + ".png"
+
+        directory = out_dir + "/pictures"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(directory + "/" + filename, "wb") as f:
+            f.write(content)
+
+    img = d.HTMLElement("<img />")
+
+    if out_dir is not None:
+        img.params["src"] = root_path + "/pictures/" + filename
+    else:
+        content = "".join(picture.getContent().split())
+        img.params["src"] = "data:image/png;base64," + picture.getContent()
+
+    return img
+
+
+def _createReplacements(node, out_dir, root_path):
+    """
+    Create html versions of `replacements_tagnames` tags and put them into
+    `replacements[]` variable. Remove `replacements_tagnames` from DOM.
+
+    Transform <codebox>es to <pre> tags.
+
+    CherryTree saves <codebox>es at the end of the <node>. Thats right - they
+    are not in the source as all other tags, but at the end. Instead of
+    <codebox> in the text, there is
+    <rich_text justification="left"></rich_text>, which needs to be replaced
+    with <pre>
+    """
+    def in_replacements_tagnames(x):
+        return x.getTagName().lower() in ["codebox", "table", "encoded_png"]
+
+    replacements = []
+    for replacement in node.find("", fn=in_replacements_tagnames):
+        el = None
+
+        tag_name = replacement.getTagName()
+        if tag_name == "codebox":
+            el = d.HTMLElement("<pre>")
+            el.childs = replacement.childs[:]
+            el.params["syntax"] = replacement.params["syntax_highlighting"]
+            el.endtag = d.HTMLElement("</pre>")
+        elif tag_name == "table":
+            el = _processTable(replacement)
+        elif tag_name == "encoded_png":
+            el = _processPicture(replacement, out_dir, root_path)
+        else:
+            raise ValueError(
+                "This shouldn't happend." +
+                "If does, there is new unknown <element>."
+            )
+
+        replacements.append(el)
+
+        # remove original element (codebox/table) from DOM
+        replacement.replaceWith(d.HTMLElement(""))
+
+    return replacements
 
 
 def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
@@ -150,84 +238,18 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
         if n.params["unique_id"] != str(node_id):
             n.replaceWith(d.HTMLElement(""))
 
-    #===========================================================================
-    # transform <codebox>es to <pre> tags.
-    # CherryTree saves <codebox>es at the end of the <node>. Thats right - they
-    # are not in the source as all other tags, but at the end. Instead of
-    # <codebox> in the text, there is
-    # <rich_text justification="left"></rich_text>, which needs to be replaced
-    # with <pre>
-    def processTable(table):
-        "Convert cherrytree table to HTML table."
+    replacements = _createReplacements(node, out_dir, root_path)
 
-        del table.params["char_offset"]
-
-        html_table = str(table)
-
-        html_table = html_table.replace("<cell>", "<td>")
-        html_table = html_table.replace("</cell>", "</td>")
-        html_table = html_table.replace("<row>", "<tr>")
-        html_table = html_table.replace("</row>", "</tr>\n")
-
-        return d.parseString(html_table)
-
-    def processPicture(picture, out_dir, root_path):
-        content = base64.b64decode(picture.getContent())
-
-        if out_dir is not None:
-            filename = hashlib.md5(content).hexdigest() + ".png"
-
-            directory = out_dir + "/pictures"
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-
-            with open(directory + "/" + filename, "wb") as f:
-                f.write(content)
-
-        img = d.HTMLElement("<img />")
-
-        if out_dir is not None:
-            img.params["src"] = root_path + "/pictures/" + filename
-        else:
-            content = "".join(picture.getContent().split())
-            img.params["src"] = "data:image/png;base64," + picture.getContent()
-
-        return img
-
-    # create html versions of |replacements_tagnames| tags and put them into
-    # |replacements[]| variable
-    # remove |replacements_tagnames| from DOM
-    replacements = []
-    replacements_tagnames = ["codebox", "table", "encoded_png"]
-    for replacement in node.find("", fn=lambda x:
-                                     x.getTagName() in replacements_tagnames):
-        el = None
-
-        tag_name = replacement.getTagName()
-        if tag_name == "codebox":
-            el = d.HTMLElement("<pre>")
-            el.childs = replacement.childs[:]
-            el.params["syntax"] = replacement.params["syntax_highlighting"]
-            el.endtag = d.HTMLElement("</pre>")
-        elif tag_name == "table":
-            el = processTable(replacement)
-        elif tag_name == "encoded_png":
-            el = processPicture(replacement, out_dir, root_path)
-        else:
-            raise ValueError(
-                "This shouldn't happend." +
-                "If does, there is new unknown <element>."
-            )
-
-        replacements.append(el)
-
-        # remove original element (codebox/table) from DOM
-        replacement.replaceWith(d.HTMLElement(""))
+    def find_replacements_placeholder(node):
+        return node.find(
+            "rich_text",
+            {"justification": "left"},
+            fn=lambda x: x.getContent() == ""
+        )
 
     # replace <rich_text justification="left"></rich_text> with tags from
-    # |replacements|
-    # if len(replacements) > 0:
-    for cnt, rt in enumerate(node.find("rich_text", {"justification": "left"})):
+    # `replacements`
+    for cnt, rt in enumerate(find_replacements_placeholder(node)):
         if "link" in rt.params:  # support for pictures as links
             el = d.HTMLElement("<rich_text>")
             el.params["link"] = rt.params["link"]
@@ -241,10 +263,10 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
     # transform all <rich_text> tags to something usefull
     for t in node.find("rich_text"):
         # transform <rich_text some="crap"> to html tags
-        __transformRichText(t)
+        _transformRichText(t)
 
         # transform links
-        __transformLink(t, dom, node_id, out_dir, root_path)
+        _transformLink(t, dom, node_id, out_dir, root_path)
 
         # there are _arrays_ of rich_text with no params - this is not same as
         # <p>, because <p> allows nested parameters -> <p>Xex <b>bold</b></p>,
@@ -275,7 +297,5 @@ def convertToHtml(dom, node_id, do_anchors=True, out_dir=None, root_path=None):
                     "<a href='#" + anchor + "'>" + head.getContent() + "</a>"
                 )
             ]
-
-    # TODO transform • to ul/li tags
 
     return str(node.find("node")[0].getContent())
