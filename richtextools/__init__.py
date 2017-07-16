@@ -7,9 +7,13 @@
 #
 #= Imports ====================================================================
 import parser as d
-from parser import write, writeln
-from savenode        import saveNode, COPYRIGHT
-from converttohtml   import convertToHtml
+from parser import write
+from parser import writeln
+
+from savenode import saveNode
+from savenode import COPYRIGHT
+
+from converttohtml import convertToHtml
 
 from usertemplates import saveUserCSS
 from usertemplates import generateAtomFeed
